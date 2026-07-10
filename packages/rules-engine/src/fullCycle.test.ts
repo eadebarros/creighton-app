@@ -12,11 +12,6 @@ import { addDays, entry } from './testHelpers.js';
  * cycle. Per Section 7 of the architecture doc, that external clinical
  * validation is a recommended gate before treating the engine as
  * "ready for real couples," independent of these tests passing.
- *
- * Note the dry days right after menstruation (days 5-9) come out FERTILE,
- * not INFERTILE_ALTERNATING — that's the literal, no-decay reading of the
- * "D-1 fértil por qualquer motivo -> D fértil" cascade in Section 3.4,
- * flagged separately for product/clinical review.
  */
 const start = '2026-02-01';
 
@@ -52,9 +47,12 @@ describe('computeFertilityStates — full synthetic cycle', () => {
     expect(byDate.get(addDays(start, 2))).toMatchObject({ rawCode: '0', computedState: 'FERTILE' });
   });
 
-  it('the dry stretch right after menstruation stays FERTILE via the cascade rule (see file header)', () => {
+  it('day 3 spotting (L) opens a 3-day wait-and-see tail, then the dry stretch resumes alternating', () => {
+    // day 3 = L spotting; days 4-6 are the wait-and-see tail; day 7+ resumes alternating.
     expect(byDate.get(addDays(start, 4))!.computedState).toBe('FERTILE');
-    expect(byDate.get(addDays(start, 8))!.computedState).toBe('FERTILE');
+    expect(byDate.get(addDays(start, 6))!.computedState).toBe('FERTILE');
+    expect(byDate.get(addDays(start, 7))!.computedState).toBe('INFERTILE_ALTERNATING');
+    expect(byDate.get(addDays(start, 8))!.computedState).toBe('INFERTILE_ALTERNATING');
   });
 
   it('mucus buildup is FERTILE with correct raw codes, pre-peak', () => {

@@ -21,10 +21,8 @@ describe('assignStates — Section 3.4', () => {
   });
 
   it(
-    'intercourse forces the NEXT day FERTILE, and that propagates forward ' +
-      '("D-1 fértil por qualquer motivo -> D fértil" is written literally in Section 3.4, ' +
-      'with no decay condition — flagging this as worth a product/clinical sanity check, ' +
-      'but implementing it as written per the "ambiguity -> FERTILE" principle)',
+    'semen clearing: intercourse forces exactly the NEXT day FERTILE, then a genuinely dry ' +
+      'D+2 reverts to INFERTILE_ALTERNATING (clinically confirmed 2026-07-10 — does not cascade)',
     () => {
       const result = assignStates(
         [
@@ -34,7 +32,11 @@ describe('assignStates — Section 3.4', () => {
         ],
         NO_PEAK,
       );
-      expect(result.map((r) => r.computedState)).toEqual(['INFERTILE_ALTERNATING', 'FERTILE', 'FERTILE']);
+      expect(result.map((r) => r.computedState)).toEqual([
+        'INFERTILE_ALTERNATING',
+        'FERTILE',
+        'INFERTILE_ALTERNATING',
+      ]);
     },
   );
 
@@ -47,7 +49,7 @@ describe('assignStates — Section 3.4', () => {
     expect(viaShiny[0]!.computedState).toBe(viaWet[0]!.computedState);
   });
 
-  it('menstrual bleeding (H/M) at cycle start forces FERTILE and, per the literal cascade above, so does the day after', () => {
+  it('menstrual bleeding (H/M) at cycle start forces FERTILE but does not open a wait-and-see tail — the first dry day after goes straight to alternating', () => {
     const result = assignStates(
       [
         entry('2026-01-01', { bleedingType: 'H' }),
@@ -56,8 +58,76 @@ describe('assignStates — Section 3.4', () => {
       ],
       NO_PEAK,
     );
-    expect(result.map((r) => r.computedState)).toEqual(['FERTILE', 'FERTILE', 'FERTILE']);
+    expect(result.map((r) => r.computedState)).toEqual(['FERTILE', 'FERTILE', 'INFERTILE_ALTERNATING']);
     expect(result[0]!.peakRelation).toBe('NOT_APPLICABLE');
+  });
+
+  it('wait and see: an isolated mucus/spotting blip pre-Peak opens a 3-dry-day countdown before alternating resumes', () => {
+    const result = assignStates(
+      [
+        dryDay('2026-01-01'),
+        entry('2026-01-02', { mucusSensation: 'WET' }), // isolated blip, not a real Peak build-up
+        dryDay('2026-01-03'),
+        dryDay('2026-01-04'),
+        dryDay('2026-01-05'),
+        dryDay('2026-01-06'), // 4th dry day since the blip -> countdown exhausted
+      ],
+      NO_PEAK,
+    );
+    expect(result.map((r) => r.computedState)).toEqual([
+      'INFERTILE_ALTERNATING',
+      'FERTILE',
+      'FERTILE',
+      'FERTILE',
+      'FERTILE',
+      'INFERTILE_ALTERNATING',
+    ]);
+  });
+
+  it('wait and see: minor spotting (L/VL/B) pre-mucus-phase also opens the 3-dry-day countdown, not just post-Peak breakthrough', () => {
+    const result = assignStates(
+      [
+        dryDay('2026-01-01'),
+        entry('2026-01-02', { bleedingType: 'L' }),
+        dryDay('2026-01-03'),
+        dryDay('2026-01-04'),
+        dryDay('2026-01-05'),
+        dryDay('2026-01-06'),
+      ],
+      NO_PEAK,
+    );
+    expect(result.map((r) => r.computedState)).toEqual([
+      'INFERTILE_ALTERNATING',
+      'FERTILE',
+      'FERTILE',
+      'FERTILE',
+      'FERTILE',
+      'INFERTILE_ALTERNATING',
+    ]);
+  });
+
+  it('a fresh mucus signal mid-countdown re-arms the wait-and-see clock instead of letting it expire', () => {
+    const result = assignStates(
+      [
+        entry('2026-01-01', { mucusSensation: 'WET' }),
+        dryDay('2026-01-02'),
+        entry('2026-01-03', { mucusSensation: 'WET' }), // re-arms countdown to 3
+        dryDay('2026-01-04'),
+        dryDay('2026-01-05'),
+        dryDay('2026-01-06'),
+        dryDay('2026-01-07'), // 4th dry day since the 2nd blip -> exhausted
+      ],
+      NO_PEAK,
+    );
+    expect(result.map((r) => r.computedState)).toEqual([
+      'FERTILE',
+      'FERTILE',
+      'FERTILE',
+      'FERTILE',
+      'FERTILE',
+      'FERTILE',
+      'INFERTILE_ALTERNATING',
+    ]);
   });
 
   it('interruptive bleeding after a confirmed peak (INFERTILE_ABSOLUTE window) forces FERTILE + 3 dry days after', () => {

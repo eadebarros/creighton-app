@@ -11,6 +11,17 @@ const P_LABELS: Record<number, PeakRelation> = { 0: 'P', 1: 'P1', 2: 'P2', 3: 'P
  * receives the whole cycle's history at once. That's what makes "retroactive
  * recalculation" a non-issue here: there's nothing to retroactively patch,
  * every call just computes the correct state for every day from scratch.
+ *
+ * Pre-Peak dry days pass two independent tests before they can be
+ * INFERTILE_ALTERNATING (clinically confirmed 2026-07-10):
+ *  - Semen clearing: D-1 intercourse forces exactly D FERTILE (not beyond —
+ *    it does not cascade to D+1 just because D was FERTILE).
+ *  - Wait and see: any real change day (mucus signal, or L/VL/B spotting,
+ *    in any phase) opens a 3-dry-day countdown (`changeCountdown`) during
+ *    which days stay FERTILE; a 4th consecutive dry day resumes alternating.
+ *    A genuine build-up to Peak keeps re-arming this countdown every day
+ *    (each mucus day resets it to 3), which is what keeps the whole real
+ *    mucus phase FERTILE without needing a separate sticky flag.
  */
 export function assignStates(
   entries: DailyEntryInput[],
@@ -19,9 +30,7 @@ export function assignStates(
   const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
   const { confirmed, lastCandidateDate } = peakResult;
 
-  let mucusPhaseStarted = false;
-  let breakthroughDryCountdown = 0;
-  let prevState: FertilityState | null = null;
+  let changeCountdown = 0;
   let prevIntercourse = false;
 
   const results: DailyFertilityState[] = [];
@@ -40,63 +49,53 @@ export function assignStates(
     let peakRelation: PeakRelation;
 
     if (entry.bleedingType !== 'NONE') {
-      const isBreakthrough =
-        mucusPhaseStarted || (confirmed !== null && entry.date > confirmed.date);
       state = 'FERTILE';
       peakRelation = 'NOT_APPLICABLE';
-      if (isBreakthrough && (entry.bleedingType === 'L' || entry.bleedingType === 'VL' || entry.bleedingType === 'B')) {
-        breakthroughDryCountdown = 3;
+      if (entry.bleedingType === 'L' || entry.bleedingType === 'VL' || entry.bleedingType === 'B') {
+        changeCountdown = 3;
       }
-      // H/M bleeding that's part of the cycle-opening flow (not yet in the
-      // mucus phase) does not start a dry-day tail — it's ordinary menstruation.
-    } else if (breakthroughDryCountdown > 0 && isDry) {
-      state = 'FERTILE';
-      peakRelation = 'NOT_APPLICABLE';
-      breakthroughDryCountdown -= 1;
-    } else {
-      breakthroughDryCountdown = 0;
-
+      // H/M is the main menstrual flow (cycle-opening, or a real new cycle)
+      // — it never itself opens a wait-and-see tail; only spotting does.
+    } else if (confirmed !== null && entry.date >= confirmed.date) {
       // Only days on/after Tc fall in the confirmed post-peak window — days
       // before Tc (even though a peak eventually gets confirmed later in the
       // cycle) must still go through the mucus-phase/alternating-day logic
       // below, exactly as they would have before confirmation happened.
-      if (confirmed !== null && entry.date >= confirmed.date) {
-        const diff = daysBetween(confirmed.date, entry.date);
-        if (diff <= 3) {
-          state = 'FERTILE';
-          peakRelation = P_LABELS[diff]!;
-        } else {
-          state = 'INFERTILE_ABSOLUTE';
-          peakRelation = 'P4_PLUS';
-        }
-      } else if (isMucusSignal) {
-        mucusPhaseStarted = true;
+      const diff = daysBetween(confirmed.date, entry.date);
+      if (diff <= 3) {
         state = 'FERTILE';
-        peakRelation = entry.date === lastCandidateDate ? 'CANDIDATE' : 'PRE_PEAK';
-      } else if (mucusPhaseStarted) {
+        peakRelation = P_LABELS[diff]!;
+        // P0-P3 is fertile unconditionally; clear any countdown armed by the
+        // pre-peak mucus build-up so it can't leak a stale "breakthrough
+        // tail" into P4_PLUS once this fixed window ends.
+        changeCountdown = 0;
+      } else if (changeCountdown > 0 && isDry) {
         state = 'FERTILE';
-        peakRelation = 'PRE_PEAK';
-      } else if (!isDry) {
-        // UNMAPPED/unknown data in the pre-mucus dry phase — ambiguous, safe default.
-        state = 'FERTILE';
-        peakRelation = 'NOT_APPLICABLE';
+        peakRelation = 'P4_PLUS';
+        changeCountdown -= 1;
       } else {
-        // Pre-mucus dry phase: the alternating-day rule.
-        if (prevIntercourse) {
-          state = 'FERTILE';
-        } else if (prevState === 'FERTILE') {
-          state = 'FERTILE';
-        } else if (isDry) {
-          state = 'INFERTILE_ALTERNATING';
-        } else {
-          state = 'FERTILE';
-        }
-        peakRelation = 'NOT_APPLICABLE';
+        state = 'INFERTILE_ABSOLUTE';
+        peakRelation = 'P4_PLUS';
       }
+    } else if (changeCountdown > 0 && isDry) {
+      state = 'FERTILE';
+      peakRelation = 'NOT_APPLICABLE';
+      changeCountdown -= 1;
+    } else if (isMucusSignal) {
+      changeCountdown = 3;
+      state = 'FERTILE';
+      peakRelation = entry.date === lastCandidateDate ? 'CANDIDATE' : 'PRE_PEAK';
+    } else if (!isDry) {
+      // UNMAPPED/unknown data in the pre-mucus dry phase — ambiguous, safe default.
+      state = 'FERTILE';
+      peakRelation = 'NOT_APPLICABLE';
+    } else {
+      // Genuinely dry, no active wait-and-see tail: only semen clearing left to check.
+      state = prevIntercourse ? 'FERTILE' : 'INFERTILE_ALTERNATING';
+      peakRelation = 'NOT_APPLICABLE';
     }
 
     results.push({ date: entry.date, rawCode, computedState: state, peakRelation });
-    prevState = state;
     prevIntercourse = entry.intercourse;
   }
 

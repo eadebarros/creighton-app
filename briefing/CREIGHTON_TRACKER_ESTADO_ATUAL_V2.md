@@ -187,28 +187,49 @@ Quando `tracker` transiciona para `CONFIRMED(Tc)`:
 
 ### 3.4. Regra de Intimidade — Estados de Fertilidade Diária
 
+**CORRIGIDO 10/07 (validação clínica):** a leitura anterior desta seção continha uma regra recursiva quebrada ("D-1 estado FERTILE por qualquer motivo → D FERTILE"), que fazia o estado fértil se perpetuar indefinidamente após qualquer gatilho, mesmo com dias genuinamente secos depois. A regra correta usa dois testes independentes — só passando nos dois um dia seco vira `INFERTILE_ALTERNATING`:
+
 ```
 INÍCIO DE CICLO (bleeding H/M) 
   → estado = FERTILE
-  (fluxo pode mascarar muco; nunca classificar como infértil aqui,
-   mesmo que o histórico sugira fase seca habitual)
+  (fluxo pode mascarar muco; nunca classificar como infértil aqui.
+   Fluxo H/M de abertura de ciclo NÃO abre janela de wait-and-see —
+   o primeiro dia seco após a menstruação já pode ser avaliado
+   normalmente pela Regra do Dia Alternado abaixo.)
 
-FASE PRÉ-ÁPICE, sem muco tipo-pico ainda, sem candidato a Ápice ativo:
-  → Regra do Dia Alternado:
-     - Se D-1 teve intercourse == true → estado(D) = FERTILE (obrigatório,
-       independente de qualquer outro dado — sêmen mascara observação)
-     - Se D-1 teve estado FERTILE (por qualquer motivo) → estado(D) = FERTILE
-     - Senão, se D é seco/infértil-potencial (raw_code 0 ou 2) 
-       → estado(D) = INFERTILE_ALTERNATING
-     - Qualquer ambiguidade → FERTILE
+FASE PRÉ-ÁPICE, dia D genuinamente seco (raw_code 0 ou 2):
+  → estado(D) = INFERTILE_ALTERNATING somente se passar nos dois testes:
 
-PRIMEIRO SINAL DE MUCO (qualquer raw_code != 0/2) OU bleeding L/VL:
-  → estado = FERTILE (permanece assim durante toda a fase de muco,
-     incluindo período de candidato a Ápice não confirmado)
+     1. Teste do Sêmen (Semen Clearing): se D-1 teve intercourse == true
+        → estado(D) = FERTILE (sêmen residual pode simular muco em D;
+          efeito dura exatamente 1 dia, NÃO se propaga para D+1, D+2...
+          — se D+1 for genuinamente seco, a alternância já pode ser
+          retomada nele, sem esperar novo muco tipo-pico)
+
+     2. Teste do Wait and See: se D está a até 3 dias de distância do
+        último "dia de mudança real" (qualquer muco tipo != 0/2, OU
+        sangramento leve L/VL/B, em qualquer fase do ciclo)
+        → estado(D) = FERTILE (a onda de estrogênio pode não ter
+          passado ainda). No 4º dia consecutivo de secura completa
+          após o dia de mudança, o teste é considerado passado.
+          Um novo dia de mudança durante a contagem reinicia o
+          contador para 3 (é isso que mantém a fase real de muco
+          fértil o tempo todo, sem precisar de uma flag "sticky"
+          separada — cada dia de muco genuíno rearma o contador).
+
+     Se D passar nos dois testes → estado(D) = INFERTILE_ALTERNATING.
+     Qualquer ambiguidade/dado não mapeado → FERTILE.
+
+PRIMEIRO SINAL DE MUCO (qualquer raw_code != 0/2):
+  → estado = FERTILE, e esse dia conta como "dia de mudança" para o
+     Teste do Wait and See acima.
 
 APÓS ÁPICE CONFIRMADO (Tc = P):
-  P, P+1, P+2, P+3 → estado = FERTILE (janela de segurança obrigatória)
-  P+4 em diante → estado = INFERTILE_ABSOLUTE
+  P, P+1, P+2, P+3 → estado = FERTILE (janela de segurança obrigatória,
+     incondicional — não depende do Teste do Sêmen nem do Wait and See)
+  P+4 em diante → estado = INFERTILE_ABSOLUTE, EXCETO se ainda dentro
+     de uma janela de Wait and See aberta por sangramento de interrupção
+     (ver regra abaixo) — nesse caso, FERTILE até o contador zerar.
      (permitido dia e noite consecutivos até o início do próximo ciclo,
       OU até sangramento de interrupção — ver regra abaixo)
 
@@ -216,6 +237,8 @@ SANGRAMENTO DE INTERRUPÇÃO (fora do período menstrual principal,
   em qualquer fase, inclusive INFERTILE_ABSOLUTE):
   → estado = FERTILE no dia do sangramento + 3 dias adicionais de
      secagem completa (raw_code 0) após o fim do sangramento
+     (mesmo mecanismo do Teste do Wait and See acima — sangramento
+     leve L/VL/B sempre conta como "dia de mudança", em qualquer fase)
   → NÃO fecha o ciclo automaticamente (isso só ocorre com menstruação
      de fluxo H/M real — ver Seção 3.5, variante pré-menopausa)
 ```
