@@ -1,6 +1,9 @@
-// Creighton Tracker backend — data model per briefing/CREIGHTON_TRACKER_ESTADO_ATUAL_V2.md Seção 2.
-// DAILY_ENTRY is append-only (immutable observed data); DAILY_FERTILITY_STATE
-// is derived and versioned — old rows are superseded, never rewritten.
+// Creighton Tracker backend — data model per briefing/CREIGHTON_TRACKER_ESTADO_ATUAL_V2.md Seção 2,
+// atualizado por briefing/CREIGHTON_ADENDO_01_MULTIPLAS_OBSERVACOES.md.
+// OBSERVATION é o evento bruto append-only (múltiplas por dia); DAILY_ENTRY é
+// derivado — o pico do dia, consolidado por pickDailyPeak (rules-engine) e
+// reescrito (upsert) a cada nova observação/anulação do dia. DAILY_FERTILITY_STATE
+// continua derivado e versionado a partir de DAILY_ENTRY, como antes.
 
 datasource db {
   provider = "postgresql"
@@ -108,13 +111,43 @@ model Cycle {
   confirmedPeakDay    DateTime?    @map("confirmed_peak_day") @db.Date
   peakDayConfirmedAt  DateTime?    @map("peak_day_confirmed_at")
   entries             DailyEntry[]
+  observations        Observation[]
 
   @@index([userId, isActive])
   @@map("cycles")
 }
 
-/// Immutable/append-only observed data. Never UPDATEd once written except by
-/// an explicit INSTRUCTOR_CORRECTION (out of scope until a later sprint).
+/// Evento bruto append-only (Adendo 01) — uma mulher observa várias vezes ao
+/// dia; cada checagem gera uma linha aqui. Nunca é UPDATEd nem deletado —
+/// correção de erro anula (`voided`), nunca edita in-place. Sem
+/// UNIQUE(cycle_id, date): múltiplas por dia é o normal.
+model Observation {
+  id             String        @id @default(uuid()) @db.Uuid
+  cycleId        String        @map("cycle_id") @db.Uuid
+  cycle          Cycle         @relation(fields: [cycleId], references: [id])
+  date           DateTime      @db.Date
+  observedAt     DateTime      @map("observed_at")
+  bleedingType   BleedingType  @map("bleeding_type")
+  mucusSensation MucusSensation @map("mucus_sensation")
+  mucusStretch   MucusStretch  @map("mucus_stretch")
+  mucusColor     MucusColor?   @map("mucus_color")
+  shinyReflex    Boolean?      @map("shiny_reflex")
+  rawCode        String        @map("raw_code")
+  intercourse    Boolean
+  entrySource    EntrySource   @default(USER) @map("entry_source")
+  voided         Boolean       @default(false)
+  voidedAt       DateTime?     @map("voided_at")
+  peakForEntry   DailyEntry?   @relation("PeakObservation")
+
+  @@index([cycleId, date])
+  @@map("observations")
+}
+
+/// Derivado (Adendo 01) — o pico do dia entre as OBSERVATIONs não-anuladas de
+/// (cycle, date), calculado por `pickDailyPeak` (rules-engine). É o único
+/// lugar do sistema com upsert in-place: reescrito a cada nova observação ou
+/// anulação do dia. Mantém `@@unique([cycleId, date])` — o contrato "uma
+/// linha por dia" que alimenta o resto do motor não muda.
 model DailyEntry {
   id                       String                @id @default(uuid()) @db.Uuid
   cycleId                  String                @map("cycle_id") @db.Uuid
@@ -130,6 +163,9 @@ model DailyEntry {
   peakOverrideByInstructor Boolean               @default(false) @map("peak_override_by_instructor")
   enteredAt                DateTime              @map("entered_at")
   entrySource              EntrySource           @default(USER) @map("entry_source")
+  peakObservationId        String?               @unique @map("peak_observation_id") @db.Uuid
+  peakObservation          Observation?          @relation("PeakObservation", fields: [peakObservationId], references: [id])
+  consolidatedAt           DateTime?             @map("consolidated_at")
   states                   DailyFertilityState[]
 
   @@unique([cycleId, date])

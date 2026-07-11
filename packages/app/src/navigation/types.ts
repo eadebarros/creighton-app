@@ -4,7 +4,7 @@ export type RootStackParamList = {
   MucusColor: undefined;
   MucusStretch: undefined;
   Intercourse: undefined;
-  Confirmation: undefined;
+  Confirmation: { observationCount: number };
   Chart: undefined;
   InvitePartner: undefined;
 };

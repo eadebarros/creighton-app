@@ -17,9 +17,17 @@ const cycleSchema = z.object({
   variantModeSnapshot: variantModeSchema,
 });
 
-/** `rawCode` is intentionally NOT accepted here — the server always re-derives it (see services/entryService.ts). */
+/**
+ * `rawCode` is intentionally NOT accepted here — the server always re-derives
+ * it (see services/entryService.ts). `id` is this OBSERVATION's own id
+ * (Adendo 01) — `dailyEntryId` is the separate, stable id of the derived
+ * "peak of the day" row this observation may consolidate into, proposed by
+ * the client once per (cycle, date) and reused across every same-day
+ * observation, same trust model already used for `cycle.id`.
+ */
 const entrySchema = z.object({
   id: z.uuid(),
+  dailyEntryId: z.uuid(),
   cycle: cycleSchema,
   date: isoDate,
   bleedingType: bleedingTypeSchema,

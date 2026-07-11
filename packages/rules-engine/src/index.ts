@@ -32,6 +32,8 @@ export { deriveRawCode } from './vdrsLookup.js';
 export { findConfirmedPeak } from './peakTracker.js';
 export { assignStates } from './fertilityState.js';
 export { assignLactationStates } from './variantLactation.js';
+export { pickDailyPeak } from './pickDailyPeak.js';
+export type { Observation, DailyConsolidation } from './pickDailyPeak.js';
 export * from './types.js';
 export * from './cycleBoundary.js';
 export * from './colorToken.js';

@@ -9,7 +9,7 @@ vi.mock('../api/client', () => ({
 
 import { createTestSqlExecutor } from '../db/testSqlExecutor';
 import { migrate } from '../db/schema';
-import { recordEntry } from '../db/entryRepository';
+import { recordObservation } from '../db/observationRepository';
 import { getPendingOutboxEntries } from '../db/outboxRepository';
 import { flush, pull, syncNow } from './syncClient';
 
@@ -35,7 +35,7 @@ describe('flush', () => {
   it('does nothing when there is no session yet', async () => {
     const db = createTestSqlExecutor();
     await migrate(db);
-    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId, testVariantMode);
+    await recordObservation(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId, testVariantMode);
     await flush(db, async () => null, BASE_URL);
     expect(postEntriesMock).not.toHaveBeenCalled();
     expect(await getPendingOutboxEntries(db)).toHaveLength(1);
@@ -44,13 +44,13 @@ describe('flush', () => {
   it('marks entries synced on both created and duplicate results', async () => {
     const db = createTestSqlExecutor();
     await migrate(db);
-    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId, testVariantMode);
-    await recordEntry(db, { bleedingType: 'NONE', mucusSensation: 'DRY', intercourse: false }, '2026-01-02', testNewId, testVariantMode);
+    await recordObservation(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId, testVariantMode);
+    await recordObservation(db, { bleedingType: 'NONE', mucusSensation: 'DRY', intercourse: false }, '2026-01-02', testNewId, testVariantMode);
     const [first, second] = await getPendingOutboxEntries(db);
 
     postEntriesMock.mockResolvedValue([
-      { id: first!.entryId, status: 'created' },
-      { id: second!.entryId, status: 'duplicate' },
+      { id: first!.observationId, status: 'created' },
+      { id: second!.observationId, status: 'duplicate' },
     ]);
 
     await flush(db, getToken, BASE_URL);
@@ -62,7 +62,7 @@ describe('flush', () => {
   it('leaves entries queued and records the error when the request fails', async () => {
     const db = createTestSqlExecutor();
     await migrate(db);
-    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId, testVariantMode);
+    await recordObservation(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId, testVariantMode);
     postEntriesMock.mockRejectedValue(new Error('network down'));
 
     await flush(db, getToken, BASE_URL);
@@ -84,15 +84,27 @@ describe('pull', () => {
   it('upserts fertility states and advances the sync_meta cursor to the response serverTime', async () => {
     const db = createTestSqlExecutor();
     await migrate(db);
-    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId, testVariantMode);
-    const [pending] = await getPendingOutboxEntries(db);
+    const { cycleId } = await recordObservation(
+      db,
+      { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false },
+      '2026-01-01',
+      testNewId,
+      testVariantMode,
+    );
+    // confirmed_fertility_states.daily_entry_id FKs to daily_entries(id) — the
+    // consolidated (peak-of-the-day) row, not the raw observation's own id
+    // (Adendo 01), so the mocked sync response must reference that one.
+    const dailyEntry = await db.getFirstAsync<{ id: string }>(
+      'SELECT id FROM daily_entries WHERE cycle_id = ? AND date = ?',
+      [cycleId, '2026-01-01'],
+    );
 
     getSyncMock.mockResolvedValue({
       serverTime: '2026-01-02T00:00:00.000Z',
       cycles: [],
       fertilityStates: [
         {
-          entryId: pending!.entryId,
+          entryId: dailyEntry!.id,
           cycleId: 'cycle-1',
           date: '2026-01-01',
           computedState: 'FERTILE',
@@ -108,7 +120,7 @@ describe('pull', () => {
     expect(getSyncMock).toHaveBeenCalledWith(BASE_URL, 'test-token', new Date(0).toISOString());
     const confirmed = await db.getFirstAsync<{ computed_state: string; peak_relation: string }>(
       'SELECT computed_state, peak_relation FROM confirmed_fertility_states WHERE daily_entry_id = ?',
-      [pending!.entryId],
+      [dailyEntry!.id],
     );
     expect(confirmed).toMatchObject({ computed_state: 'FERTILE', peak_relation: 'NOT_APPLICABLE' });
 
@@ -132,10 +144,10 @@ describe('syncNow', () => {
   it('flushes before pulling', async () => {
     const db = createTestSqlExecutor();
     await migrate(db);
-    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId, testVariantMode);
+    await recordObservation(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId, testVariantMode);
     const [pending] = await getPendingOutboxEntries(db);
 
-    postEntriesMock.mockResolvedValue([{ id: pending!.entryId, status: 'created' }]);
+    postEntriesMock.mockResolvedValue([{ id: pending!.observationId, status: 'created' }]);
     getSyncMock.mockResolvedValue({ serverTime: '2026-01-02T00:00:00.000Z', cycles: [], fertilityStates: [] });
 
     await syncNow(db, getToken, BASE_URL);

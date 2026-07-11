@@ -17,7 +17,7 @@ export async function flush(db: SqlExecutor, getToken: GetToken, baseUrl: string
 
   const payload = await buildOutboxPayload(
     db,
-    pending.map((p) => p.entryId),
+    pending.map((p) => p.observationId),
   );
   if (payload.length === 0) {
     return;
@@ -30,7 +30,7 @@ export async function flush(db: SqlExecutor, getToken: GetToken, baseUrl: string
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     for (const entry of pending) {
-      await markOutboxFailed(db, entry.entryId, message);
+      await markOutboxFailed(db, entry.observationId, message);
     }
   }
 }

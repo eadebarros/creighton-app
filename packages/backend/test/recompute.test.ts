@@ -167,4 +167,44 @@ describe('LACTATION variant recompute', () => {
     const cycle = await prisma.cycle.findUniqueOrThrow({ where: { id: cycleId } });
     expect(cycle.confirmedPeakDay).toBeNull(); // peak/Ápice tracking doesn't apply to LACTATION
   });
+
+  it('Adendo 01 — a second, later observation on an already PIB_ACTIVE day reconsolidates the peak and correctly breaks the PIB, versioned via superseded_by', async () => {
+    const cycleId = randomUUID();
+    // Days 1-19 only — established PIB, day 19 is the first PIB_ACTIVE day (drop the day-20 deviation from the fixture; we reconsolidate day 19 itself instead).
+    const entries = buildLactationEntries(cycleId, start).slice(0, -1);
+
+    for (const entry of entries) {
+      const res = await request(app).post('/entries').send({ entries: [entry] });
+      expect(res.status).toBe(200);
+    }
+
+    const day19 = addDays(start, 18);
+    const day19Date = new Date(`${day19}T00:00:00Z`);
+    const beforeState = await currentStateByDate(cycleId);
+    expect(beforeState.get(day19)).toMatchObject({ computedState: 'INFERTILE_ALTERNATING', pibActive: true });
+
+    const dailyEntry = await prisma.dailyEntry.findFirstOrThrow({ where: { cycleId, date: day19Date } });
+
+    // A second, later check the same day reports mucus that deviates from the established PIB.
+    const secondObservation = buildEntry(cycleId, day19, {
+      cycle: { id: cycleId, startDate: start, endDate: null, isActive: true, variantModeSnapshot: 'LACTATION' },
+      dailyEntryId: dailyEntry.id, // a real client reuses the day's existing derived-row id
+      mucusSensation: 'WET',
+      enteredAt: new Date(`${day19}T22:00:00.000Z`).toISOString(),
+    });
+    const res = await request(app).post('/entries').send({ entries: [secondObservation] });
+    expect(res.status).toBe(200);
+
+    const afterState = await currentStateByDate(cycleId);
+    expect(afterState.get(day19)).toMatchObject({ computedState: 'FERTILE', pibActive: false });
+
+    const observationCount = await prisma.observation.count({ where: { cycleId, date: day19Date } });
+    expect(observationCount).toBe(2);
+
+    // The old PIB_ACTIVE version must be superseded, not silently overwritten.
+    const allStatesForDay = await prisma.dailyFertilityState.findMany({ where: { dailyEntryId: dailyEntry.id } });
+    expect(allStatesForDay.length).toBeGreaterThan(1);
+    const superseded = allStatesForDay.find((s) => s.supersededById !== null);
+    expect(superseded).toMatchObject({ computedState: 'INFERTILE_ALTERNATING', pibActive: true });
+  });
 });

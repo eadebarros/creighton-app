@@ -10,6 +10,8 @@ import type {
 
 export interface OutboxPayloadEntry {
   id: string;
+  /** Stable id of the derived "peak of the day" row this observation consolidates into (Adendo 01). */
+  dailyEntryId: string;
   cycle: {
     id: string;
     startDate: string;

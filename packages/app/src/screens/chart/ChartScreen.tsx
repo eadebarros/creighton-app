@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/expo';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { ObservationsSheet } from '../../components/ObservationsSheet';
 import { StampBadge } from '../../components/StampBadge';
 import { stateToToken } from '@creighton/rules-engine';
 import { colors, fonts, radii, spacing } from '../../theme';
@@ -28,36 +29,36 @@ export function ChartScreen({ navigation }: Props) {
   const [groups, setGroups] = useState<PhaseGroup[] | null>(null);
   const [dayNumberByDate, setDayNumberByDate] = useState<Map<string, number>>(new Map());
   const [inObservationPhase, setInObservationPhase] = useState(false);
+  const [cycleId, setCycleId] = useState<string | null>(null);
+  const [sheetDate, setSheetDate] = useState<string | null>(null);
+
+  async function loadChart() {
+    const db = await getDb();
+    const activeCycle = await getActiveCycle(db);
+    if (!activeCycle) {
+      setCycleId(null);
+      setGroups([]);
+      return;
+    }
+    setCycleId(activeCycle.id);
+    const results = await getFertilityStatesForCycle(db, activeCycle.id);
+    const days: ChartDay[] = results.map(({ row, state }) => ({
+      date: row.date,
+      rawCode: row.raw_code,
+      bleedingType: row.bleeding_type,
+      intercourse: row.intercourse === 1,
+      computedState: state.computedState,
+      peakRelation: state.peakRelation,
+      pibActive: state.pibActive,
+      lactationPhase: state.lactationPhase,
+    }));
+    setDayNumberByDate(new Map(days.map((day, i) => [day.date, i + 1])));
+    setGroups(groupByContiguousPhase(days));
+    setInObservationPhase(days[days.length - 1]?.lactationPhase === 'OBSERVATION');
+  }
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const db = await getDb();
-      const activeCycle = await getActiveCycle(db);
-      if (!activeCycle) {
-        if (!cancelled) setGroups([]);
-        return;
-      }
-      const results = await getFertilityStatesForCycle(db, activeCycle.id);
-      const days: ChartDay[] = results.map(({ row, state }) => ({
-        date: row.date,
-        rawCode: row.raw_code,
-        bleedingType: row.bleeding_type,
-        intercourse: row.intercourse === 1,
-        computedState: state.computedState,
-        peakRelation: state.peakRelation,
-        pibActive: state.pibActive,
-        lactationPhase: state.lactationPhase,
-      }));
-      if (!cancelled) {
-        setDayNumberByDate(new Map(days.map((day, i) => [day.date, i + 1])));
-        setGroups(groupByContiguousPhase(days));
-        setInObservationPhase(days[days.length - 1]?.lactationPhase === 'OBSERVATION');
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    loadChart();
   }, []);
 
   return (
@@ -98,7 +99,7 @@ export function ChartScreen({ navigation }: Props) {
             <Text style={styles.groupLabel}>{group.label.toUpperCase()}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.groupRow}>
               {group.days.map((day) => (
-                <View key={day.date} style={styles.dayColumn}>
+                <Pressable key={day.date} style={styles.dayColumn} onPress={() => setSheetDate(day.date)}>
                   <StampBadge
                     color={stateToToken({
                       bleedingType: day.bleedingType,
@@ -112,7 +113,7 @@ export function ChartScreen({ navigation }: Props) {
                     size={60}
                   />
                   <Text style={styles.dayNumber}>{dayNumberByDate.get(day.date)}</Text>
-                </View>
+                </Pressable>
               ))}
             </ScrollView>
           </View>
@@ -127,6 +128,15 @@ export function ChartScreen({ navigation }: Props) {
           </View>
         ))}
       </View>
+
+      {sheetDate && cycleId && (
+        <ObservationsSheet
+          cycleId={cycleId}
+          date={sheetDate}
+          onClose={() => setSheetDate(null)}
+          onChanged={loadChart}
+        />
+      )}
     </View>
   );
 }

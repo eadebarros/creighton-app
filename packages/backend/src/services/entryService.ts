@@ -3,6 +3,7 @@ import { deriveRawCode, resolveCycleForNewEntry } from '@creighton/rules-engine'
 import type { ActiveCycleSummary, LastEntrySummary } from '@creighton/rules-engine';
 import { toIsoDate } from '../domain/mapping.js';
 import type { EntryPayload } from '../validation/entries.js';
+import { consolidateDay } from './dailyConsolidationService.js';
 import { recomputeCycleFertilityStates } from './recomputeCycle.js';
 
 export interface EntryResult {
@@ -23,44 +24,42 @@ async function getActiveCycleSummary(
 }
 
 /**
- * Processes a batch of offline-queued entries for one user, in date order
- * (never the array's arrival order — an out-of-order batch must still
- * resolve cycle boundaries correctly). The server is authoritative for the
- * cycle-open/close decision (same shared `resolveCycleForNewEntry` the app
- * itself runs) — the client's proposed `cycle.id`/`variantModeSnapshot` are
- * only used as the row's data on the (rare, single-device) occasions the
- * server agrees a new cycle should be created; a mismatch is logged, not
- * silently trusted, since Sprint 3's real dual-device conflict handling
- * doesn't exist yet.
+ * Processes a batch of offline-queued Observations for one user, in date
+ * order (Adendo 01 — each payload is now a raw intraday observation, not a
+ * direct write to the derived DailyEntry). The server is authoritative for
+ * the cycle-open/close decision, resolved once per DISTINCT date in the
+ * batch — not once per observation, since a second same-day observation must
+ * never re-run cycle-boundary resolution (it would wrongly see "today" as a
+ * fresh flow candidate against yesterday's already-updated in-memory state).
+ * The client's proposed `cycle.id`/`variantModeSnapshot` are only used as the
+ * row's data on the occasions the server agrees a new cycle should be
+ * created; a mismatch is logged, not silently trusted (Sprint 3's real
+ * dual-device conflict handling doesn't exist yet).
  *
- * Idempotent twice over: a repeated entry `id` is a duplicate outright; a
- * fresh `id` that collides with an existing `(cycleId, date)` pair is also
- * treated as a duplicate rather than a second row for that day.
+ * Idempotent on a repeated observation `id` (duplicate outright, no-op) —
+ * but a genuinely new observation for an already-used date is NOT a
+ * duplicate anymore: multiple observations per day is the normal case now,
+ * each one triggers reconsolidation of that day's peak.
  *
- * Performance note: this talks to Postgres over Railway's public proxy
- * (100-300ms/round-trip is normal, unlike a local DB), so it deliberately
- * batches its reads — one query for "which of this batch's ids already
- * exist" and one for "the active cycle's existing dates" up front, then
- * tracks cycle/last-entry state in memory across the loop — instead of a
- * handful of queries per entry, which made a 20-day batch take 30+ seconds.
- *
- * Runs entirely inside the caller's transaction, finishing with one
- * `recomputeCycleFertilityStates` call per distinct cycle touched — cheap,
- * since it recomputes a whole cycle in one pass regardless of how many days
- * changed.
+ * Runs entirely inside the caller's transaction. After the loop: one
+ * `consolidateDay` per distinct (cycleId, date) touched, then one
+ * `recomputeCycleFertilityStates` per distinct cycle touched (in that order
+ * — consolidate before recomputing, since recompute reads DailyEntry).
  */
-export async function processEntryBatch(
+export async function processObservationBatch(
   tx: Prisma.TransactionClient,
   userId: string,
   entries: EntryPayload[],
 ): Promise<EntryResult[]> {
   const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
   const results: EntryResult[] = [];
+  const touchedDates = new Map<string, string>(); // date -> cycleId
+  const dailyEntryIdByDate = new Map<string, string>();
   const touchedCycleIds = new Set<string>();
 
   const existingById = new Map(
     (
-      await tx.dailyEntry.findMany({
+      await tx.observation.findMany({
         where: { id: { in: sorted.map((e) => e.id) } },
         select: { id: true, cycleId: true },
       })
@@ -77,67 +76,59 @@ export async function processEntryBatch(
         return entry ? { date: toIsoDate(entry.date), bleedingType: entry.bleedingType } : null;
       })()
     : null;
-  // Existing dates in the active cycle, fetched once — lets duplicate-date
-  // detection stay in memory instead of a query per entry.
-  const existingDatesInActiveCycle = new Set<string>(
+  // date -> cycleId already established: either a pre-existing DailyEntry, or
+  // a date already resolved earlier in this same batch.
+  const cycleIdByDate = new Map<string, string>(
     activeCycle
-      ? (await tx.dailyEntry.findMany({ where: { cycleId: activeCycle.id }, select: { date: true } })).map((row) =>
+      ? (await tx.dailyEntry.findMany({ where: { cycleId: activeCycle.id }, select: { date: true } })).map((row) => [
           toIsoDate(row.date),
-        )
+          activeCycle!.id,
+        ])
       : [],
   );
 
   for (const payload of sorted) {
+    dailyEntryIdByDate.set(payload.date, payload.dailyEntryId);
+
     const existingCycleId = existingById.get(payload.id);
     if (existingCycleId) {
       results.push({ id: payload.id, status: 'duplicate' });
+      touchedDates.set(payload.date, existingCycleId);
       touchedCycleIds.add(existingCycleId);
       continue;
     }
 
-    // A resubmission of a date that's already recorded (same day re-sent
-    // with a fresh entry id, e.g. a retried outbox flush) is a duplicate
-    // outright — checked BEFORE cycle-boundary resolution, since resolving
-    // boundaries for a date that already exists in the active cycle could
-    // otherwise decide to open a brand-new cycle using the client's
-    // (already-used) proposed cycle id, colliding with the one it made for
-    // the original submission.
-    if (activeCycle && existingDatesInActiveCycle.has(payload.date)) {
-      results.push({ id: payload.id, status: 'duplicate' });
-      touchedCycleIds.add(activeCycle.id);
-      continue;
-    }
-
-    const action = resolveCycleForNewEntry(activeCycle, payload.date, payload.bleedingType, lastEntry);
-
-    let cycleId: string;
-    if (action.type === 'OPEN_NEW') {
-      if (action.closePreviousCycle) {
-        await tx.cycle.update({
-          where: { id: action.closePreviousCycle.id },
-          data: { isActive: false, endDate: new Date(`${action.closePreviousCycle.endDate}T00:00:00Z`) },
+    let cycleId = cycleIdByDate.get(payload.date);
+    if (!cycleId) {
+      const action = resolveCycleForNewEntry(activeCycle, payload.date, payload.bleedingType, lastEntry);
+      if (action.type === 'OPEN_NEW') {
+        if (action.closePreviousCycle) {
+          await tx.cycle.update({
+            where: { id: action.closePreviousCycle.id },
+            data: { isActive: false, endDate: new Date(`${action.closePreviousCycle.endDate}T00:00:00Z`) },
+          });
+        }
+        const created = await tx.cycle.create({
+          data: {
+            id: payload.cycle.id,
+            userId,
+            startDate: new Date(`${action.startDate}T00:00:00Z`),
+            isActive: true,
+            variantModeSnapshot: payload.cycle.variantModeSnapshot,
+          },
         });
+        cycleId = created.id;
+        activeCycle = { id: cycleId, startDate: action.startDate, hasEntries: false };
+      } else {
+        cycleId = action.cycleId;
       }
-      const created = await tx.cycle.create({
-        data: {
-          id: payload.cycle.id,
-          userId,
-          startDate: new Date(`${action.startDate}T00:00:00Z`),
-          isActive: true,
-          variantModeSnapshot: payload.cycle.variantModeSnapshot,
-        },
-      });
-      cycleId = created.id;
-      activeCycle = { id: cycleId, startDate: action.startDate, hasEntries: false };
-      existingDatesInActiveCycle.clear();
-    } else {
-      cycleId = action.cycleId;
-    }
+      cycleIdByDate.set(payload.date, cycleId);
 
-    if (payload.cycle.id !== cycleId) {
-      console.warn(
-        `entry ${payload.id} (date ${payload.date}): client cycle id ${payload.cycle.id} disagrees with server-resolved cycle ${cycleId}`,
-      );
+      if (payload.cycle.id !== cycleId) {
+        console.warn(
+          `observation ${payload.id} (date ${payload.date}): client cycle id ${payload.cycle.id} disagrees with server-resolved cycle ${cycleId}`,
+        );
+      }
     }
 
     const { rawCode } = deriveRawCode(
@@ -147,11 +138,12 @@ export async function processEntryBatch(
       payload.shinyReflex ?? undefined,
     );
 
-    await tx.dailyEntry.create({
+    await tx.observation.create({
       data: {
         id: payload.id,
         cycleId,
         date: new Date(`${payload.date}T00:00:00Z`),
+        observedAt: new Date(payload.enteredAt),
         bleedingType: payload.bleedingType,
         mucusSensation: payload.mucusSensation,
         mucusStretch: payload.mucusStretch,
@@ -159,20 +151,22 @@ export async function processEntryBatch(
         shinyReflex: payload.shinyReflex ?? null,
         rawCode,
         intercourse: payload.intercourse,
-        enteredAt: new Date(payload.enteredAt),
         entrySource: payload.entrySource,
       },
     });
     results.push({ id: payload.id, status: 'created' });
+    touchedDates.set(payload.date, cycleId);
     touchedCycleIds.add(cycleId);
 
     // Update in-memory tracking for the next iteration — avoids re-querying
     // state this same transaction already knows, having just written it.
     activeCycle = { id: cycleId, startDate: activeCycle?.startDate ?? payload.date, hasEntries: true };
     lastEntry = { date: payload.date, bleedingType: payload.bleedingType };
-    existingDatesInActiveCycle.add(payload.date);
   }
 
+  for (const [date, cycleId] of touchedDates) {
+    await consolidateDay(tx, cycleId, new Date(`${date}T00:00:00Z`), dailyEntryIdByDate.get(date)!);
+  }
   for (const cycleId of touchedCycleIds) {
     await recomputeCycleFertilityStates(tx, cycleId);
   }

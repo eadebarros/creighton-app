@@ -9,6 +9,7 @@ export function asUser(userId: string): { 'x-test-user-id': string } {
 export function buildEntry(cycleId: string, date: string, overrides: Partial<EntryPayload> = {}): EntryPayload {
   return {
     id: randomUUID(),
+    dailyEntryId: randomUUID(),
     cycle: {
       id: cycleId,
       startDate: date,

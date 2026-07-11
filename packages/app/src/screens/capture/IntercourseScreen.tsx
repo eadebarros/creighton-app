@@ -8,7 +8,7 @@ import { backStepFor, useCaptureFlow } from './CaptureFlowContext';
 import type { RootStackParamList } from '../../navigation/types';
 import { getDb } from '../../db/client';
 import { newId } from '../../db/id';
-import { recordEntry } from '../../db/entryRepository';
+import { getObservationsForDate, recordObservation } from '../../db/observationRepository';
 import { today } from '../../domain/dateMath';
 import type { CaptureAnswers } from '../../domain/mapping';
 import { getApiBaseUrl } from '../../api/config';
@@ -39,13 +39,15 @@ export function IntercourseScreen({ navigation }: Props) {
     };
 
     const db = await getDb();
-    await recordEntry(db, completeAnswers, today(), newId, getCachedVariantMode);
+    const todayDate = today();
+    const { cycleId } = await recordObservation(db, completeAnswers, todayDate, newId, getCachedVariantMode);
+    const observationCount = (await getObservationsForDate(db, cycleId, todayDate)).filter((o) => !o.voided).length;
     // Fire-and-forget: don't block navigation on network — the outbox row
     // just written stays queued and gets picked up by the background sync
     // (useSyncLifecycle) if this fails or the device is offline.
     syncNow(db, getToken, getApiBaseUrl()).catch(() => {});
     reset();
-    navigation.navigate('Confirmation');
+    navigation.navigate('Confirmation', { observationCount });
   }
 
   return (

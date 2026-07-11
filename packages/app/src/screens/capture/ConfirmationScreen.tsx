@@ -6,7 +6,8 @@ import { colors, fonts, radii, spacing } from '../../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Confirmation'>;
 
-export function ConfirmationScreen({ navigation }: Props) {
+export function ConfirmationScreen({ navigation, route }: Props) {
+  const { observationCount } = route.params;
   return (
     <View style={styles.screen}>
       <Svg width={52} height={52} viewBox="0 0 52 52">
@@ -21,6 +22,9 @@ export function ConfirmationScreen({ navigation }: Props) {
       </Svg>
       <Text style={styles.title}>Registrado</Text>
       <Text style={styles.subtitle}>O dado de hoje foi salvo. O status é calculado automaticamente.</Text>
+      {observationCount > 1 && (
+        <Text style={styles.note}>Esta é sua {observationCount}ª observação de hoje — vale a mais fértil do dia.</Text>
+      )}
       <Pressable
         style={styles.button}
         onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Chart' }] })}
@@ -48,6 +52,12 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: fonts.body.regular,
     fontSize: 14,
+    color: colors.inkMuted,
+    textAlign: 'center',
+  },
+  note: {
+    fontFamily: fonts.body.medium,
+    fontSize: 13,
     color: colors.inkMuted,
     textAlign: 'center',
   },
