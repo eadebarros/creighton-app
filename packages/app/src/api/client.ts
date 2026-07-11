@@ -1,8 +1,10 @@
 import type {
   BleedingType,
+  FertilityColorToken,
   MucusColor,
   MucusSensation,
   MucusStretch,
+  PeakRelation,
   VariantMode,
 } from '@creighton/rules-engine';
 
@@ -82,4 +84,78 @@ export async function getSync(baseUrl: string, token: string, since: string): Pr
     throw new Error(`GET /sync failed: ${res.status}`);
   }
   return res.json();
+}
+
+export interface MeResponse {
+  role: 'PRIMARY_OBSERVER' | 'COOP_PARTNER';
+  partner: { email: string } | null;
+}
+
+export async function getMe(baseUrl: string, token: string): Promise<MeResponse> {
+  const res = await fetch(`${baseUrl}/me`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) {
+    throw new Error(`GET /me failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export interface PartnerInvite {
+  code: string;
+  expiresAt: string;
+}
+
+export async function createPartnerInvite(baseUrl: string, token: string): Promise<PartnerInvite> {
+  const res = await fetch(`${baseUrl}/partner-invites`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new Error(`POST /partner-invites failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export interface RedeemInviteResult {
+  partnerEmail: string;
+}
+
+export async function redeemPartnerInvite(baseUrl: string, token: string, code: string): Promise<RedeemInviteResult> {
+  const res = await fetch(`${baseUrl}/partner-invites/redeem`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ code }),
+  });
+  const body = await res.json();
+  if (!res.ok) {
+    throw new Error(body?.error ?? `POST /partner-invites/redeem failed: ${res.status}`);
+  }
+  return body;
+}
+
+export interface PartnerStatus {
+  hasActiveCycle: boolean;
+  today: string;
+  asOfDate: string | null;
+  cycleDay: number | null;
+  colorToken: FertilityColorToken | null;
+  peakRelation: PeakRelation | null;
+  acknowledgedToday: boolean;
+}
+
+export async function getPartnerStatus(baseUrl: string, token: string): Promise<PartnerStatus> {
+  const res = await fetch(`${baseUrl}/partner/status`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) {
+    throw new Error(`GET /partner/status failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function postPartnerAcknowledge(baseUrl: string, token: string): Promise<void> {
+  const res = await fetch(`${baseUrl}/partner/acknowledge`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new Error(`POST /partner/acknowledge failed: ${res.status}`);
+  }
 }

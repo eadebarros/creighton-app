@@ -9,7 +9,7 @@ import { tokenCache } from '@clerk/expo/token-cache';
 import { Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { IBMPlexMono_500Medium, IBMPlexMono_600SemiBold } from '@expo-google-fonts/ibm-plex-mono';
-import { RootNavigator } from './src/navigation/RootNavigator';
+import { RoleGate } from './src/navigation/RoleGate';
 import { AuthScreen } from './src/screens/auth/AuthScreen';
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -22,7 +22,7 @@ SplashScreen.preventAutoHideAsync();
 /** Must render inside <ClerkProvider> — useAuth() needs that context. */
 function AuthGate() {
   const { isSignedIn } = useAuth();
-  return isSignedIn ? <RootNavigator /> : <AuthScreen />;
+  return isSignedIn ? <RoleGate /> : <AuthScreen />;
 }
 
 export default function App() {

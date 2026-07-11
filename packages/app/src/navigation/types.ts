@@ -6,4 +6,5 @@ export type RootStackParamList = {
   Intercourse: undefined;
   Confirmation: undefined;
   Chart: undefined;
+  InvitePartner: undefined;
 };

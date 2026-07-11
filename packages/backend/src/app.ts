@@ -3,6 +3,9 @@ import { clerkMiddleware } from '@clerk/express';
 import { healthRouter } from './routes/health.js';
 import { entriesRouter } from './routes/entries.js';
 import { syncRouter } from './routes/sync.js';
+import { meRouter } from './routes/me.js';
+import { partnerInvitesRouter } from './routes/partnerInvites.js';
+import { partnerRouter } from './routes/partner.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 export function createApp() {
@@ -12,6 +15,9 @@ export function createApp() {
   app.use(healthRouter);
   app.use(entriesRouter);
   app.use(syncRouter);
+  app.use(meRouter);
+  app.use(partnerInvitesRouter);
+  app.use(partnerRouter);
   app.use(errorHandler);
   return app;
 }

@@ -15,8 +15,8 @@ const POST_PEAK_RELATIONS = new Set<PeakRelation>(['P', 'P1', 'P2', 'P3']);
 
 /**
  * Bleeding takes grouping precedence over the peak window, mirroring the
- * same precedence rule domain/colorToken.ts uses for the stamp color —
- * a P+2 day with breakthrough spotting still reads as "Menstruação".
+ * same precedence rule @creighton/rules-engine's stateToToken uses for the
+ * stamp color — a P+2 day with breakthrough spotting still reads as "Menstruação".
  */
 export function derivePhaseLabel(
   day: Pick<ChartDay, 'bleedingType' | 'computedState' | 'peakRelation'>,

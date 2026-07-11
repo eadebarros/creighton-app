@@ -8,6 +8,7 @@ import { MucusStretchScreen } from '../screens/capture/MucusStretchScreen';
 import { IntercourseScreen } from '../screens/capture/IntercourseScreen';
 import { ConfirmationScreen } from '../screens/capture/ConfirmationScreen';
 import { ChartScreen } from '../screens/chart/ChartScreen';
+import { InvitePartnerScreen } from '../screens/partner/InvitePartnerScreen';
 import { getDb } from '../db/client';
 import { getActiveCycle } from '../db/cycleRepository';
 import { hasEntryForDate } from '../db/entryRepository';
@@ -45,6 +46,7 @@ export function RootNavigator() {
           <Stack.Screen name="Intercourse" component={IntercourseScreen} />
           <Stack.Screen name="Confirmation" component={ConfirmationScreen} />
           <Stack.Screen name="Chart" component={ChartScreen} />
+          <Stack.Screen name="InvitePartner" component={InvitePartnerScreen} />
         </Stack.Navigator>
       </CaptureFlowProvider>
     </NavigationContainer>

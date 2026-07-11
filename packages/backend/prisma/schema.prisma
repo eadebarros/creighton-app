@@ -89,6 +89,10 @@ model User {
   instructorCredentialAck Boolean     @default(false) @map("instructor_credential_ack")
   createdAt               DateTime    @default(now()) @map("created_at")
   cycles                  Cycle[]
+  partnerInvitesCreated   PartnerInvite[]         @relation("PartnerInviteCreatedBy")
+  partnerInvitesRedeemed  PartnerInvite[]         @relation("PartnerInviteUsedBy")
+  acknowledgmentsMade     PartnerAcknowledgment[] @relation("PartnerAcknowledgmentByPartner")
+  acknowledgmentsForMe    PartnerAcknowledgment[] @relation("PartnerAcknowledgmentForPrimary")
 
   @@map("users")
 }
@@ -151,4 +155,42 @@ model DailyFertilityState {
 
   @@index([dailyEntryId, supersededById])
   @@map("daily_fertility_states")
+}
+
+/// Short-lived, single-use redemption code the PRIMARY_OBSERVER generates and
+/// shares with her partner out-of-band. Redeeming links both User rows'
+/// partnerId symmetrically and flips the redeemer's role to COOP_PARTNER
+/// (services/partnerInviteService.ts). Rows are kept after redemption/expiry
+/// as an audit trail — never deleted.
+model PartnerInvite {
+  id          String    @id @default(uuid()) @db.Uuid
+  code        String    @unique
+  createdById String    @map("created_by_id") @db.Uuid
+  createdBy   User      @relation("PartnerInviteCreatedBy", fields: [createdById], references: [id])
+  createdAt   DateTime  @default(now()) @map("created_at")
+  expiresAt   DateTime  @map("expires_at")
+  usedById    String?   @map("used_by_id") @db.Uuid
+  usedBy      User?     @relation("PartnerInviteUsedBy", fields: [usedById], references: [id])
+  usedAt      DateTime? @map("used_at")
+
+  @@index([createdById])
+  @@map("partner_invites")
+}
+
+/// The "confirmação de ciência" event (briefing Seção 9.3) — records that the
+/// COOP_PARTNER opened the dashboard and saw the PRIMARY_OBSERVER's status on
+/// a given calendar date. Deliberately its own append-only table, never a
+/// DAILY_ENTRY row — this is the partner's own act, not observed clinical
+/// data about the woman's cycle.
+model PartnerAcknowledgment {
+  id             String   @id @default(uuid()) @db.Uuid
+  partnerUserId  String   @map("partner_user_id") @db.Uuid
+  partnerUser    User     @relation("PartnerAcknowledgmentByPartner", fields: [partnerUserId], references: [id])
+  primaryUserId  String   @map("primary_user_id") @db.Uuid
+  primaryUser    User     @relation("PartnerAcknowledgmentForPrimary", fields: [primaryUserId], references: [id])
+  date           DateTime @db.Date
+  acknowledgedAt DateTime @default(now()) @map("acknowledged_at")
+
+  @@unique([partnerUserId, primaryUserId, date])
+  @@map("partner_acknowledgments")
 }

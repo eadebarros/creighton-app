@@ -9,7 +9,9 @@ import { prisma } from '../src/db/prisma.js';
  */
 export async function resetDb(): Promise<void> {
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE daily_fertility_states, daily_entries, cycles, users RESTART IDENTITY CASCADE',
+    `TRUNCATE TABLE daily_fertility_states, daily_entries, cycles,
+       partner_acknowledgments, partner_invites, users
+     RESTART IDENTITY CASCADE`,
   );
 }
 

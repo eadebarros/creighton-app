@@ -3,13 +3,17 @@ import type { NextFunction, Request, Response } from 'express';
 /**
  * Stand-in for @clerk/express in tests — Sprint 2's tests exercise our own
  * entries/recompute/sync logic, not Clerk's already-battle-tested auth
- * internals. Every request is treated as authenticated as one fixed test user.
+ * internals. Defaults to one fixed test user; Sprint 3's partner tests need
+ * a second, distinct identity, selected via the `x-test-user-id` header (see
+ * factories.ts's `asUser` helper) — existing tests never set that header, so
+ * they're unaffected.
  */
 export const TEST_CLERK_USER_ID = 'user_test_fixed';
 export const TEST_CLERK_EMAIL = 'creighton-test@example.com';
 
-export function getAuth(_req: Request): { userId: string; isAuthenticated: boolean } {
-  return { userId: TEST_CLERK_USER_ID, isAuthenticated: true };
+export function getAuth(req: Request): { userId: string; isAuthenticated: boolean } {
+  const userId = req.header('x-test-user-id') ?? TEST_CLERK_USER_ID;
+  return { userId, isAuthenticated: true };
 }
 
 export function clerkMiddleware() {
@@ -18,8 +22,9 @@ export function clerkMiddleware() {
 
 export const clerkClient = {
   users: {
-    async getUser(_id: string) {
-      return { emailAddresses: [{ emailAddress: TEST_CLERK_EMAIL }] };
+    async getUser(id: string) {
+      const email = id === TEST_CLERK_USER_ID ? TEST_CLERK_EMAIL : `${id}@example.com`;
+      return { emailAddresses: [{ emailAddress: email }] };
     },
   },
 };

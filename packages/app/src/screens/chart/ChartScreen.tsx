@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/expo';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { StampBadge } from '../../components/StampBadge';
-import { stateToToken } from '../../domain/colorToken';
+import { stateToToken } from '@creighton/rules-engine';
 import { colors, fonts, radii, spacing } from '../../theme';
 import { getDb } from '../../db/client';
 import { getActiveCycle } from '../../db/cycleRepository';
@@ -70,6 +70,9 @@ export function ChartScreen({ navigation }: Props) {
               onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Bleeding' }] })}
             >
               <Text style={styles.registerButtonText}>Registrar hoje</Text>
+            </Pressable>
+            <Pressable onPress={() => navigation.navigate('InvitePartner')}>
+              <Text style={styles.signOutLabel}>Convidar parceiro</Text>
             </Pressable>
             <Pressable onPress={() => signOut()}>
               <Text style={styles.signOutLabel}>Sair</Text>

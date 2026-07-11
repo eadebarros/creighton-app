@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { stateToToken } from './colorToken';
+import { stateToToken } from './colorToken.js';
 
 describe('stateToToken', () => {
   it('bleeding takes precedence over everything else', () => {

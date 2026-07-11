@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { colors, fonts } from '../theme';
-import type { FertilityColorToken } from '../domain/colorToken';
+import type { FertilityColorToken } from '@creighton/rules-engine';
 import { hashRotationDegrees } from './stampRotation';
 
 export interface StampBadgeProps {

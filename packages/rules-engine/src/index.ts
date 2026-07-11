@@ -29,6 +29,7 @@ export { findConfirmedPeak } from './peakTracker.js';
 export { assignStates } from './fertilityState.js';
 export * from './types.js';
 export * from './cycleBoundary.js';
+export * from './colorToken.js';
 export { addDays, daysBetween } from './dateMath.js';
 
 /**

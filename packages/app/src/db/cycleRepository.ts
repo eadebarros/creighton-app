@@ -30,6 +30,12 @@ export async function getActiveCycle(db: SqlExecutor): Promise<ActiveCycleSummar
   };
 }
 
+/** Whether this device has ever recorded any cycle — used to gate the one-time role-choice screen. */
+export async function getCycleCount(db: SqlExecutor): Promise<number> {
+  const row = await db.getFirstAsync<CountRow>('SELECT COUNT(*) as count FROM cycles', []);
+  return row?.count ?? 0;
+}
+
 /**
  * `newId` is injected (rather than importing expo-crypto here directly) so
  * this file — and entryRepository.ts, which calls it — stay importable from

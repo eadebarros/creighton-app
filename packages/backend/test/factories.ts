@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import type { EntryPayload } from '../src/validation/entries.js';
 
+/** Supertest header override selecting which mock Clerk identity a request is authenticated as. */
+export function asUser(userId: string): { 'x-test-user-id': string } {
+  return { 'x-test-user-id': userId };
+}
+
 export function buildEntry(cycleId: string, date: string, overrides: Partial<EntryPayload> = {}): EntryPayload {
   return {
     id: randomUUID(),
