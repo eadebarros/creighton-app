@@ -24,7 +24,9 @@
     "plugins": [
       "expo-font",
       "expo-splash-screen",
-      "expo-sqlite"
+      "expo-sqlite",
+      "@clerk/expo",
+      "expo-secure-store"
     ]
   }
 }

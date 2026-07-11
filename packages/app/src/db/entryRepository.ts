@@ -85,6 +85,18 @@ export async function recordEntry(
   const id = newId();
   const enteredAt = new Date().toISOString();
 
+  // recordEntry always mints a fresh id, so re-registering today replaces
+  // the row via the UNIQUE(cycle_id, date) conflict below — which would
+  // otherwise leave the old id's sync_outbox row orphaned (pointing at a
+  // daily_entries row that's about to disappear). Clean it up first.
+  const existing = await db.getFirstAsync<{ id: string }>(
+    'SELECT id FROM daily_entries WHERE cycle_id = ? AND date = ?',
+    [cycleId, date],
+  );
+  if (existing) {
+    await db.runAsync('DELETE FROM sync_outbox WHERE entry_id = ?', [existing.id]);
+  }
+
   await db.runAsync(
     `INSERT OR REPLACE INTO daily_entries
        (id, cycle_id, date, bleeding_type, mucus_sensation, mucus_stretch, mucus_color, shiny_reflex, raw_code, intercourse, entered_at)
@@ -103,6 +115,8 @@ export async function recordEntry(
       enteredAt,
     ],
   );
+
+  await db.runAsync('INSERT INTO sync_outbox (entry_id, queued_at) VALUES (?, ?)', [id, enteredAt]);
 
   return { cycleId };
 }

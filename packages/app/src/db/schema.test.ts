@@ -28,6 +28,39 @@ describe('schema.migrate', () => {
     await expect(migrate(db)).resolves.not.toThrow();
   });
 
+  it('creates the sync tables added in schema version 2', async () => {
+    const db = createTestSqlExecutor();
+    await migrate(db);
+
+    for (const name of ['sync_outbox', 'sync_meta', 'confirmed_fertility_states']) {
+      const table = await db.getFirstAsync<{ name: string }>(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+        [name],
+      );
+      expect(table?.name).toBe(name);
+    }
+  });
+
+  it('upgrading from a Sprint 1 (version 1) database only adds the new tables, without erroring', async () => {
+    const db = createTestSqlExecutor();
+    // Simulate a pre-existing Sprint 1 install: version 1 tables only.
+    await db.execAsync(`
+      CREATE TABLE cycles (id TEXT PRIMARY KEY, start_date TEXT NOT NULL, end_date TEXT, is_active INTEGER NOT NULL DEFAULT 1, variant_mode_snapshot TEXT NOT NULL DEFAULT 'REGULAR');
+      CREATE TABLE daily_entries (id TEXT PRIMARY KEY, cycle_id TEXT NOT NULL, date TEXT NOT NULL, bleeding_type TEXT NOT NULL, mucus_sensation TEXT NOT NULL, mucus_stretch TEXT NOT NULL, mucus_color TEXT, shiny_reflex INTEGER, raw_code TEXT NOT NULL, intercourse INTEGER NOT NULL, entered_at TEXT NOT NULL, UNIQUE(cycle_id, date));
+      PRAGMA user_version = 1;
+    `);
+
+    await expect(migrate(db)).resolves.not.toThrow();
+
+    const outboxTable = await db.getFirstAsync<{ name: string }>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='sync_outbox'",
+      [],
+    );
+    expect(outboxTable?.name).toBe('sync_outbox');
+    const version = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version', []);
+    expect(version?.user_version).toBe(SCHEMA_VERSION);
+  });
+
   it('enforces UNIQUE(cycle_id, date) on daily_entries', async () => {
     const db = createTestSqlExecutor();
     await migrate(db);

@@ -12,6 +12,7 @@ import { getDb } from '../db/client';
 import { getActiveCycle } from '../db/cycleRepository';
 import { hasEntryForDate } from '../db/entryRepository';
 import { today } from '../domain/dateMath';
+import { useSyncLifecycle } from '../sync/useSyncLifecycle';
 import { navigationRef } from './navigationRef';
 import type { RootStackParamList } from './types';
 
@@ -31,6 +32,8 @@ async function redirectToChartIfAlreadyRegisteredToday(): Promise<void> {
 }
 
 export function RootNavigator() {
+  useSyncLifecycle();
+
   return (
     <NavigationContainer ref={navigationRef} onReady={redirectToChartIfAlreadyRegisteredToday}>
       <CaptureFlowProvider>

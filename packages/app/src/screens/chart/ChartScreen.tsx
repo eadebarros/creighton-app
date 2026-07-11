@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@clerk/expo';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { StampBadge } from '../../components/StampBadge';
 import { stateToToken } from '../../domain/colorToken';
@@ -23,6 +24,7 @@ const LEGEND_ITEMS: { color: 'RED' | 'GREEN' | 'WHITE' | 'YELLOW'; label: string
 
 export function ChartScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const { signOut } = useAuth();
   const [groups, setGroups] = useState<PhaseGroup[] | null>(null);
   const [dayNumberByDate, setDayNumberByDate] = useState<Map<string, number>>(new Map());
 
@@ -62,12 +64,17 @@ export function ChartScreen({ navigation }: Props) {
             <Text style={styles.title}>Gráfico do ciclo</Text>
             <Text style={styles.subtitle}>Arraste cada linha para o lado</Text>
           </View>
-          <Pressable
-            style={styles.registerButton}
-            onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Bleeding' }] })}
-          >
-            <Text style={styles.registerButtonText}>Registrar hoje</Text>
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              style={styles.registerButton}
+              onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Bleeding' }] })}
+            >
+              <Text style={styles.registerButtonText}>Registrar hoje</Text>
+            </Pressable>
+            <Pressable onPress={() => signOut()}>
+              <Text style={styles.signOutLabel}>Sair</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
 
@@ -124,6 +131,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
+  headerActions: {
+    alignItems: 'flex-end',
+    gap: spacing.sm,
+  },
   registerButton: {
     backgroundColor: colors.accent,
     paddingVertical: spacing.sm,
@@ -134,6 +145,11 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body.semiBold,
     fontSize: 13,
     color: colors.white,
+  },
+  signOutLabel: {
+    fontFamily: fonts.body.medium,
+    fontSize: 12,
+    color: colors.inkMuted,
   },
   title: {
     fontFamily: fonts.display.medium,
