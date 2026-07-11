@@ -87,3 +87,21 @@ export async function migrate(db: SqlExecutor): Promise<void> {
   }
   await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
 }
+
+/**
+ * Wipes every row from every table (schema/user_version untouched) — used
+ * when a different Clerk identity signs in on this device than the one who
+ * last used it (see navigation/RoleGate.tsx). The local DB has no per-user
+ * scoping of its own; without this, a second person on the same device
+ * would inherit the first person's health data. Deletes children before
+ * parents since expo-sqlite doesn't enforce FKs by default.
+ */
+export async function resetLocalData(db: SqlExecutor): Promise<void> {
+  await db.execAsync(`
+    DELETE FROM confirmed_fertility_states;
+    DELETE FROM sync_outbox;
+    DELETE FROM daily_entries;
+    DELETE FROM cycles;
+    DELETE FROM sync_meta;
+  `);
+}

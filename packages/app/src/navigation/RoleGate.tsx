@@ -6,6 +6,7 @@ import { getMe } from '../api/client';
 import { getApiBaseUrl } from '../api/config';
 import { getDb } from '../db/client';
 import { getCycleCount } from '../db/cycleRepository';
+import { resetLocalData } from '../db/schema';
 import { RoleChoiceScreen } from '../screens/onboarding/RoleChoiceScreen';
 import { PartnerDashboardScreen } from '../screens/partner/PartnerDashboardScreen';
 import { colors, fonts, spacing } from '../theme';
@@ -13,6 +14,26 @@ import { shouldShowRoleChoice } from './roleChoiceGate';
 import { RootNavigator } from './RootNavigator';
 
 const ROLE_CACHE_KEY = 'creighton.role';
+const LAST_USER_CACHE_KEY = 'creighton.lastClerkUserId';
+
+/**
+ * The local SQLite DB has no per-user scoping of its own — it's one shared
+ * file on the device. If a different Clerk identity signs in than the one
+ * who last used this device (a genuinely different person, not just a
+ * fresh install), the previous person's health data must not leak into the
+ * new session. Only wipes on a real mismatch — a first-ever launch (no
+ * prior id recorded) never wipes, so upgrading an existing Sprint 1/2
+ * install never loses real data.
+ */
+async function ensureLocalDataMatchesSignedInUser(userId: string): Promise<void> {
+  const lastUserId = await SecureStore.getItemAsync(LAST_USER_CACHE_KEY);
+  if (lastUserId && lastUserId !== userId) {
+    const db = await getDb();
+    await resetLocalData(db);
+    await SecureStore.deleteItemAsync(ROLE_CACHE_KEY);
+  }
+  await SecureStore.setItemAsync(LAST_USER_CACHE_KEY, userId);
+}
 
 type Stage =
   | { kind: 'loading' }
@@ -32,10 +53,14 @@ type Stage =
  * Clerk sign-in.
  */
 export function RoleGate() {
-  const { getToken } = useAuth();
+  const { getToken, userId } = useAuth();
   const [stage, setStage] = useState<Stage>({ kind: 'loading' });
 
   async function resolve() {
+    if (userId) {
+      await ensureLocalDataMatchesSignedInUser(userId);
+    }
+
     const cached = await SecureStore.getItemAsync(ROLE_CACHE_KEY);
     if (cached === 'COOP_PARTNER') {
       setStage({ kind: 'partner' });
@@ -70,7 +95,7 @@ export function RoleGate() {
 
   useEffect(() => {
     resolve();
-  }, [getToken]);
+  }, [getToken, userId]);
 
   switch (stage.kind) {
     case 'loading':

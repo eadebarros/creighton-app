@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { migrate, SCHEMA_VERSION } from './schema';
+import { migrate, resetLocalData, SCHEMA_VERSION } from './schema';
 import { createTestSqlExecutor } from './testSqlExecutor';
 
 describe('schema.migrate', () => {
@@ -80,5 +80,30 @@ describe('schema.migrate', () => {
         ['entry-2', 'cycle-1', '2026-01-01', 'NONE', 'WET', 'NONE', '2W', 0, '2026-01-01T20:00:00Z'],
       ),
     ).rejects.toThrow();
+  });
+
+  it('resetLocalData wipes every row but keeps the schema and user_version intact', async () => {
+    const db = createTestSqlExecutor();
+    await migrate(db);
+    await db.runAsync('INSERT INTO cycles (id, start_date) VALUES (?, ?)', ['cycle-1', '2026-01-01']);
+    await db.runAsync(
+      `INSERT INTO daily_entries
+         (id, cycle_id, date, bleeding_type, mucus_sensation, mucus_stretch, raw_code, intercourse, entered_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ['entry-1', 'cycle-1', '2026-01-01', 'NONE', 'DRY', 'NONE', '0', 0, '2026-01-01T08:00:00Z'],
+    );
+    await db.runAsync('INSERT INTO sync_outbox (entry_id, queued_at) VALUES (?, ?)', ['entry-1', '2026-01-01T08:00:00Z']);
+
+    await resetLocalData(db);
+
+    const cycles = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM cycles', []);
+    const entries = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM daily_entries', []);
+    const outbox = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM sync_outbox', []);
+    expect(cycles?.count).toBe(0);
+    expect(entries?.count).toBe(0);
+    expect(outbox?.count).toBe(0);
+
+    const version = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version', []);
+    expect(version?.user_version).toBe(SCHEMA_VERSION);
   });
 });
