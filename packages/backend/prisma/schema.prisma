@@ -1,0 +1,154 @@
+// Creighton Tracker backend — data model per briefing/CREIGHTON_TRACKER_ESTADO_ATUAL_V2.md Seção 2.
+// DAILY_ENTRY is append-only (immutable observed data); DAILY_FERTILITY_STATE
+// is derived and versioned — old rows are superseded, never rewritten.
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  PRIMARY_OBSERVER
+  COOP_PARTNER
+}
+
+enum VariantMode {
+  REGULAR
+  LACTATION
+  MENOPAUSE
+  BIP
+}
+
+enum BleedingType {
+  H
+  M
+  L
+  VL
+  B
+  NONE
+}
+
+enum MucusSensation {
+  DRY
+  DAMP
+  WET
+  LUBRICATIVE
+}
+
+enum MucusStretch {
+  NONE
+  STICKY
+  TACKY
+  ELASTIC
+}
+
+enum MucusColor {
+  CLEAR
+  CLOUDY
+  CLOUDY_CLEAR
+  YELLOW
+  BROWN
+  RED
+}
+
+enum EntrySource {
+  USER
+  INSTRUCTOR_CORRECTION
+}
+
+enum FertilityState {
+  FERTILE
+  INFERTILE_ALTERNATING
+  INFERTILE_ABSOLUTE
+}
+
+enum PeakRelation {
+  PRE_PEAK
+  CANDIDATE
+  P
+  P1
+  P2
+  P3
+  P4_PLUS
+  NOT_APPLICABLE
+}
+
+model User {
+  id                      String      @id @default(uuid()) @db.Uuid
+  clerkUserId             String      @unique @map("clerk_user_id")
+  email                   String      @unique
+  role                    UserRole    @default(PRIMARY_OBSERVER)
+  partnerId               String?     @map("partner_id") @db.Uuid
+  partner                 User?       @relation("UserPartner", fields: [partnerId], references: [id])
+  partnerOf               User[]      @relation("UserPartner")
+  currentVariantMode      VariantMode @default(REGULAR) @map("current_variant_mode")
+  instructorCredentialAck Boolean     @default(false) @map("instructor_credential_ack")
+  createdAt               DateTime    @default(now()) @map("created_at")
+  cycles                  Cycle[]
+
+  @@map("users")
+}
+
+model Cycle {
+  id                  String       @id @default(uuid()) @db.Uuid
+  userId              String       @map("user_id") @db.Uuid
+  user                User         @relation(fields: [userId], references: [id])
+  startDate           DateTime     @map("start_date") @db.Date
+  endDate             DateTime?    @map("end_date") @db.Date
+  isActive            Boolean      @default(true) @map("is_active")
+  variantModeSnapshot VariantMode  @map("variant_mode_snapshot")
+  confirmedPeakDay    DateTime?    @map("confirmed_peak_day") @db.Date
+  peakDayConfirmedAt  DateTime?    @map("peak_day_confirmed_at")
+  entries             DailyEntry[]
+
+  @@index([userId, isActive])
+  @@map("cycles")
+}
+
+/// Immutable/append-only observed data. Never UPDATEd once written except by
+/// an explicit INSTRUCTOR_CORRECTION (out of scope until a later sprint).
+model DailyEntry {
+  id                       String                @id @default(uuid()) @db.Uuid
+  cycleId                  String                @map("cycle_id") @db.Uuid
+  cycle                    Cycle                 @relation(fields: [cycleId], references: [id])
+  date                     DateTime              @db.Date
+  bleedingType             BleedingType          @map("bleeding_type")
+  mucusSensation           MucusSensation        @map("mucus_sensation")
+  mucusStretch             MucusStretch          @map("mucus_stretch")
+  mucusColor               MucusColor?           @map("mucus_color")
+  shinyReflex              Boolean?              @map("shiny_reflex")
+  rawCode                  String                @map("raw_code")
+  intercourse              Boolean
+  peakOverrideByInstructor Boolean               @default(false) @map("peak_override_by_instructor")
+  enteredAt                DateTime              @map("entered_at")
+  entrySource              EntrySource           @default(USER) @map("entry_source")
+  states                   DailyFertilityState[]
+
+  @@unique([cycleId, date])
+  @@map("daily_entries")
+}
+
+/// Derived + versioned. `supersededById` lives on the OLD row and points at
+/// the NEW row that replaced it after a retroactive recalculation; "current"
+/// is always the row where supersededById IS NULL. Old rows are never
+/// deleted or updated — this is the audit log of what was told to the couple
+/// and when it changed.
+model DailyFertilityState {
+  id                String                @id @default(uuid()) @db.Uuid
+  dailyEntryId      String                @map("daily_entry_id") @db.Uuid
+  dailyEntry        DailyEntry            @relation(fields: [dailyEntryId], references: [id])
+  computedState     FertilityState        @map("computed_state")
+  peakRelation      PeakRelation          @map("peak_relation")
+  computedAt        DateTime              @default(now()) @map("computed_at")
+  ruleEngineVersion String                @map("rule_engine_version")
+  supersededById    String?               @unique @map("superseded_by") @db.Uuid
+  supersededBy      DailyFertilityState?  @relation("Supersession", fields: [supersededById], references: [id])
+  supersedes        DailyFertilityState[] @relation("Supersession")
+
+  @@index([dailyEntryId, supersededById])
+  @@map("daily_fertility_states")
+}

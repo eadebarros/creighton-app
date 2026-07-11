@@ -3,8 +3,9 @@ dist/
 build/
 coverage/
 .expo/
-.env
-.env.local
+.env*
+!.env.example
+!.env.test.example
 *.log
 .DS_Store
 Thumbs.db
