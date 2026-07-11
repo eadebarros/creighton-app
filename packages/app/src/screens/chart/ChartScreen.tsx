@@ -9,7 +9,8 @@ import { stateToToken } from '@creighton/rules-engine';
 import { colors, fonts, radii, spacing } from '../../theme';
 import { getDb } from '../../db/client';
 import { getActiveCycle } from '../../db/cycleRepository';
-import { getFertilityStatesForCycle } from '../../db/entryRepository';
+import { getFertilityStatesForCycle, hasEntryForDate } from '../../db/entryRepository';
+import { today } from '../../domain/dateMath';
 import { groupByContiguousPhase, peakRelationLabel } from './chartGrouping';
 import type { ChartDay, PhaseGroup } from './chartGrouping';
 import type { RootStackParamList } from '../../navigation/types';
@@ -31,6 +32,7 @@ export function ChartScreen({ navigation }: Props) {
   const [inObservationPhase, setInObservationPhase] = useState(false);
   const [cycleId, setCycleId] = useState<string | null>(null);
   const [sheetDate, setSheetDate] = useState<string | null>(null);
+  const [hasRegisteredToday, setHasRegisteredToday] = useState(false);
 
   async function loadChart() {
     const db = await getDb();
@@ -38,9 +40,11 @@ export function ChartScreen({ navigation }: Props) {
     if (!activeCycle) {
       setCycleId(null);
       setGroups([]);
+      setHasRegisteredToday(false);
       return;
     }
     setCycleId(activeCycle.id);
+    setHasRegisteredToday(await hasEntryForDate(db, activeCycle.id, today()));
     const results = await getFertilityStatesForCycle(db, activeCycle.id);
     const days: ChartDay[] = results.map(({ row, state }) => ({
       date: row.date,
@@ -74,7 +78,7 @@ export function ChartScreen({ navigation }: Props) {
               style={styles.registerButton}
               onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Bleeding' }] })}
             >
-              <Text style={styles.registerButtonText}>Registrar hoje</Text>
+              <Text style={styles.registerButtonText}>{hasRegisteredToday ? 'Novo registro' : 'Registrar hoje'}</Text>
             </Pressable>
             <Pressable onPress={() => navigation.navigate('InvitePartner')}>
               <Text style={styles.signOutLabel}>Convidar parceiro</Text>
