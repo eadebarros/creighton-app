@@ -21,6 +21,7 @@
     "@prisma/client": "^6.19.3",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "prisma": "^6.19.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -28,7 +29,6 @@
     "@types/node": "^26.1.1",
     "@types/supertest": "^7.2.0",
     "dotenv-cli": "^11.0.0",
-    "prisma": "^6.19.3",
     "supertest": "^7.2.2",
     "tsx": "^4.23.0",
     "typescript": "~5.9.2",
