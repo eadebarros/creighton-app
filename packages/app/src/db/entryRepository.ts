@@ -1,6 +1,5 @@
-import { computeFertilityStates, deriveRawCode } from '@creighton/rules-engine';
+import { computeFertilityStates, deriveRawCode, resolveCycleForNewEntry } from '@creighton/rules-engine';
 import type { DailyFertilityState } from '@creighton/rules-engine';
-import { resolveCycleForNewEntry } from '../domain/cycleBoundary';
 import { answersToEntryInput, entryInputToRowValues, rowToEntryInput } from '../domain/mapping';
 import type { CaptureAnswers, DailyEntryRow } from '../domain/mapping';
 import { closeCycle, createCycle, getActiveCycle } from './cycleRepository';
@@ -11,6 +10,27 @@ export async function getEntriesForCycle(db: SqlExecutor, cycleId: string): Prom
     'SELECT * FROM daily_entries WHERE cycle_id = ? ORDER BY date ASC',
     [cycleId],
   );
+}
+
+/** The most recent entry in a cycle (by date), or null if it has none yet. */
+export async function getMostRecentEntry(
+  db: SqlExecutor,
+  cycleId: string,
+): Promise<{ date: string; bleedingType: DailyEntryRow['bleeding_type'] } | null> {
+  const row = await db.getFirstAsync<{ date: string; bleeding_type: DailyEntryRow['bleeding_type'] }>(
+    'SELECT date, bleeding_type FROM daily_entries WHERE cycle_id = ? ORDER BY date DESC LIMIT 1',
+    [cycleId],
+  );
+  return row ? { date: row.date, bleedingType: row.bleeding_type } : null;
+}
+
+/** Whether a cycle already has an entry for the given date. */
+export async function hasEntryForDate(db: SqlExecutor, cycleId: string, date: string): Promise<boolean> {
+  const row = await db.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM daily_entries WHERE cycle_id = ? AND date = ?',
+    [cycleId, date],
+  );
+  return (row?.count ?? 0) > 0;
 }
 
 /** Each entry's raw row alongside its rules-engine-computed fertility state, in date order. */
@@ -41,7 +61,8 @@ export async function recordEntry(
   newId: () => string,
 ): Promise<{ cycleId: string }> {
   const activeCycle = await getActiveCycle(db);
-  const action = resolveCycleForNewEntry(activeCycle, date, answers.bleedingType);
+  const lastEntry = activeCycle ? await getMostRecentEntry(db, activeCycle.id) : null;
+  const action = resolveCycleForNewEntry(activeCycle, date, answers.bleedingType, lastEntry);
 
   let cycleId: string;
   if (action.type === 'OPEN_NEW') {

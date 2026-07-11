@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { StampBadge } from '../../components/StampBadge';
 import { stateToToken } from '../../domain/colorToken';
@@ -21,6 +22,7 @@ const LEGEND_ITEMS: { color: 'RED' | 'GREEN' | 'WHITE' | 'YELLOW'; label: string
 ];
 
 export function ChartScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
   const [groups, setGroups] = useState<PhaseGroup[] | null>(null);
   const [dayNumberByDate, setDayNumberByDate] = useState<Map<string, number>>(new Map());
 
@@ -54,7 +56,7 @@ export function ChartScreen({ navigation }: Props) {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.title}>Gráfico do ciclo</Text>
@@ -96,7 +98,7 @@ export function ChartScreen({ navigation }: Props) {
         ))}
       </ScrollView>
 
-      <View style={styles.legend}>
+      <View style={[styles.legend, { paddingBottom: insets.bottom + spacing.md }]}>
         {LEGEND_ITEMS.map((item) => (
           <View key={item.color} style={styles.legendItem}>
             <StampBadge color={item.color} rawCode="—" size={34} />
@@ -115,7 +117,6 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xxl,
     paddingBottom: spacing.md,
   },
   headerRow: {

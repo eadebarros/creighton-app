@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-native/src/private/components/virtualview/VirtualViewNativeComponent.js b/node_modules/react-native/src/private/components/virtualview/VirtualViewNativeComponent.js
+index f14da55..ba86f7d 100644
+--- a/node_modules/react-native/src/private/components/virtualview/VirtualViewNativeComponent.js
++++ b/node_modules/react-native/src/private/components/virtualview/VirtualViewNativeComponent.js
+@@ -85,6 +85,6 @@ type VirtualViewNativeProps = $ReadOnly<{
+   onModeChange?: ?DirectEventHandler<NativeModeChangeEvent>,
+ }>;
+ 
+-export default codegenNativeComponent<VirtualViewNativeProps>('VirtualView', {
++export default (codegenNativeComponent<VirtualViewNativeProps>('VirtualView', {
+   interfaceOnly: true,
+-}) as HostComponent<VirtualViewNativeProps>;
++}): HostComponent<VirtualViewNativeProps>);

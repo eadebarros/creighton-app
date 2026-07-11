@@ -86,6 +86,34 @@ describe('entryRepository.recordEntry', () => {
     expect(firstCycleEntries).toHaveLength(1);
   });
 
+  it('consecutive H/M days (a real multi-day period) stay in the same cycle', async () => {
+    const db = createTestSqlExecutor();
+    await migrate(db);
+    const day1 = await recordEntry(
+      db,
+      { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false },
+      '2026-02-01',
+      testNewId,
+    );
+    const day2 = await recordEntry(
+      db,
+      { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false },
+      '2026-02-02',
+      testNewId,
+    );
+    const day3 = await recordEntry(
+      db,
+      { bleedingType: 'M', mucusSensation: 'DRY', intercourse: false },
+      '2026-02-03',
+      testNewId,
+    );
+    expect(day2.cycleId).toBe(day1.cycleId);
+    expect(day3.cycleId).toBe(day1.cycleId);
+
+    const entries = await getEntriesForCycle(db, day1.cycleId);
+    expect(entries).toHaveLength(3);
+  });
+
   it('getFertilityStatesForCycle pairs each row with its rules-engine computed state', async () => {
     const db = createTestSqlExecutor();
     await migrate(db);

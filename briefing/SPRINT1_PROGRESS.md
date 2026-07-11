@@ -1,9 +1,9 @@
 # Sprint 1 — Estado de Progresso
 
 **Última atualização:** 2026-07-10
-**Status:** código completo e validado por testes/typecheck/bundle. Falta apenas o teste manual em dispositivo real (nenhum emulador disponível no ambiente onde isso foi construído — um PC Windows sem SDK Android nem Mac).
+**Status:** FECHADA. Teste manual em dispositivo real (iPhone físico, via Expo Go/SDK 54) concluído em 2026-07-10, com 3 bugs reais encontrados e corrigidos (ver "Achados do teste manual" abaixo). Botão de dev seed removido.
 
-Este documento existe para não perder o histórico entre máquinas: foi escrito na sessão que implementou a Sprint 1 num PC Windows, e o trabalho continua num MacBook. O código e os commits do Git são a fonte da verdade; este arquivo é só o resumo de onde as coisas pararam.
+Este documento existe para não perder o histórico entre máquinas: foi escrito na sessão que implementou a Sprint 1 num PC Windows, e o trabalho continuou num MacBook, onde o teste manual em dispositivo real aconteceu. O código e os commits do Git são a fonte da verdade; este arquivo é só o resumo de onde as coisas pararam.
 
 ## O que já está fechado
 
@@ -34,18 +34,21 @@ Pacote Expo + React Native + TypeScript, novo workspace do monorepo. Tudo implem
 - **Imports relativos em `packages/app`:** sem sufixo `.js` (diferente de `packages/rules-engine`, que usa a convenção NodeNext). Motivo: o Metro (bundler do React Native) não resolve `./arquivo.js` apontando para `arquivo.ts` — só imports sem extensão. Isso já causou um bundle quebrado nesta sessão; se algum arquivo novo em `packages/app` usar `.js` no import, o bundle vai falhar.
 - **IDs e SQLite:** `expo-crypto`/`expo-sqlite` só são importados em arquivos "folha" (`db/id.ts`, `db/client.ts`) — os repositórios recebem `newId` por injeção de dependência pra continuarem testáveis no vitest sem depender do runtime nativo (importar `expo-crypto` direto quebra o parser do Vite, que não entende a sintaxe Flow do `react-native/index.js`).
 
-## O que falta para fechar a Sprint 1
+## Achados do teste manual (2026-07-10) e correções aplicadas
 
-1. **Teste manual em dispositivo real** — não dá pra fazer num ambiente sem emulador/Mac. Passos:
-   ```
-   npm install                                          # na raiz do monorepo
-   npm run build --workspace=@creighton/rules-engine    # rules-engine precisa estar buildado antes
-   npm run start --workspace=@creighton/app
-   ```
-   Depois, no iPhone: app **Expo Go** da App Store, mesma rede Wi-Fi do Mac, escanear o QR code com a câmera nativa. Se a rede não conectar, usar `npx expo start --tunnel` (dentro de `packages/app`).
-2. **Critério de aceite oficial da Sprint 1** (briefing Seção 5): registrar um ciclo completo (20+ dias) **offline** (modo avião), ver o gráfico clássico renderizado corretamente, sem nunca tocar rede. O botão de dev seed ajuda a simular os 20 dias rapidamente em vez de preencher um por um.
-3. **Remover o botão de dev seed** (`src/components/DevSeedButton.tsx` e seu uso em `App.tsx`) depois que o teste manual estiver satisfatório.
-4. Só depois disso a Sprint 1 está formalmente fechada e dá pra começar a Sprint 2 (backend + sync single-user).
+O Expo Go da App Store estava travado no SDK 54 (Apple ainda não aprovou builds genéricos de SDK mais novo — ver `packages/app/AGENTS.md`), então `packages/app` foi rebaixado de SDK 57 para 54 para permitir o teste sem precisar de conta Apple Developer/Xcode. Além disso, um bug de sintaxe do próprio React Native 0.81.5 (`VirtualViewNativeComponent.js`, cast `as HostComponent<...>` que o codegen não processa) foi corrigido via `patch-package` (`patches/react-native+0.81.5.patch`, aplicado automaticamente no `postinstall`).
+
+Testando o fluxo real (captura manual + botão de dev seed), 3 bugs de navegação/domínio foram encontrados e corrigidos:
+
+1. **Fragmentação de ciclo:** `resolveCycleForNewEntry` (`src/domain/cycleBoundary.ts`) abria um ciclo novo a cada dia H/M, mesmo em dias consecutivos do mesmo fluxo menstrual — um período de vários dias virava vários "ciclos" separados, perdendo dias do gráfico ativo. Corrigido: só abre ciclo novo se o dia H/M vier depois de uma lacuna real (dia anterior não era H/M, ou não é o dia seguinte). Cobertura de teste adicionada em `cycleBoundary.test.ts` e `entryRepository.test.ts`.
+2. **Gráfico não atualizava:** o botão de dev seed gravava no banco mas não navegava — se a pessoa já estivesse na tela do gráfico, ela continuava vendo dados desatualizados. Não se aplica mais (botão removido), mas o padrão de correção (navegação imperativa via `navigationRef`) ficou para casos futuros parecidos.
+3. **App sempre abre na captura:** `RootNavigator` sempre iniciava em `Bleeding`, mesmo com o dia de hoje já registrado, obrigando a repetir o fluxo a cada abertura do app. Corrigido: `onReady` do `NavigationContainer` verifica se já existe registro de hoje no ciclo ativo e, se sim, pula direto pro gráfico (`redirectToChartIfAlreadyRegisteredToday` em `RootNavigator.tsx`).
+
+Também corrigido um problema visual: as telas usavam padding fixo (`paddingTop: 66`, `spacing.xxl`) em vez de respeitar a área segura do dispositivo (notch/Dynamic Island, indicador de home) — `CaptureScreenLayout.tsx` e `ChartScreen.tsx` agora usam `useSafeAreaInsets()`.
+
+## Fechamento
+
+Critério de aceite oficial da Sprint 1 (briefing Seção 5) cumprido: ciclo completo (20 dias) registrado e visualizado corretamente em dispositivo real via Expo Go, com o motor de regras calculando os estados corretamente (validado card a card contra a tabela esperada). Botão de dev seed (`src/components/DevSeedButton.tsx`, `src/db/devSeed.ts`) removido. Sprint 2 (backend + sync single-user) pode começar.
 
 ## Onde olhar primeiro se for continuar em outra sessão/máquina
 

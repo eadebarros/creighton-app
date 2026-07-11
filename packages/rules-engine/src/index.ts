@@ -28,4 +28,14 @@ export { deriveRawCode } from './vdrsLookup.js';
 export { findConfirmedPeak } from './peakTracker.js';
 export { assignStates } from './fertilityState.js';
 export * from './types.js';
+export * from './cycleBoundary.js';
+export { addDays, daysBetween } from './dateMath.js';
+
+/**
+ * Hand-maintained — bump on any clinically-meaningful change to the VDRS
+ * lookup table or the Peak/fertility state machine. Stored on each
+ * DAILY_FERTILITY_STATE row server-side (Section 2 of the architecture doc)
+ * for traceability of which engine version produced a given computed state.
+ */
+export const RULES_ENGINE_VERSION = '0.1.0';
 

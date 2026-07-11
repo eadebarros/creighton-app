@@ -1,4 +1,4 @@
-import type { ActiveCycleSummary } from '../domain/cycleBoundary';
+import type { ActiveCycleSummary } from '@creighton/rules-engine';
 import type { SqlExecutor } from './executor';
 
 interface CycleRow {

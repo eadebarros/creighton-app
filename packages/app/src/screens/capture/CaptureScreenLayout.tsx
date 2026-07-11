@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts, spacing } from '../../theme';
 import { ProgressDots } from '../../components/ProgressDots';
 import { dotIndexForStep, totalDots, useCaptureFlow } from './CaptureFlowContext';
@@ -16,11 +17,17 @@ interface CaptureScreenLayoutProps {
 export function CaptureScreenLayout({ step, question, onBack, children }: CaptureScreenLayoutProps) {
   const { answers } = useCaptureFlow();
   const cycleDay = useCycleDay();
+  const insets = useSafeAreaInsets();
   const dots = totalDots(answers.mucusSensation);
   const activeDot = dotIndexForStep(step, answers.mucusSensation);
 
   return (
-    <View style={styles.screen}>
+    <View
+      style={[
+        styles.screen,
+        { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.xl },
+      ]}
+    >
       <View style={styles.topRow}>
         {onBack ? (
           <Pressable onPress={onBack}>
@@ -42,9 +49,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.paper,
-    paddingTop: 66,
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xl,
   },
   topRow: {
     flexDirection: 'row',

@@ -8,7 +8,6 @@ import { Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fra
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { IBMPlexMono_500Medium, IBMPlexMono_600SemiBold } from '@expo-google-fonts/ibm-plex-mono';
 import { RootNavigator } from './src/navigation/RootNavigator';
-import { DevSeedButton } from './src/components/DevSeedButton';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -37,7 +36,6 @@ export default function App() {
     <SafeAreaProvider>
       <View style={{ flex: 1 }}>
         <RootNavigator />
-        <DevSeedButton />
         <StatusBar style="auto" />
       </View>
     </SafeAreaProvider>

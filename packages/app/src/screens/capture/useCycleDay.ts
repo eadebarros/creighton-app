@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
+import { daysBetween } from '@creighton/rules-engine';
 import { getDb } from '../../db/client';
 import { getActiveCycle } from '../../db/cycleRepository';
-import { daysBetween, today } from '../../domain/dateMath';
+import { today } from '../../domain/dateMath';
 
 /** "Dia N do ciclo" — day 1 for a brand-new cycle that doesn't exist yet. */
 export function useCycleDay(): number | null {
