@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { requireUser } from '../middleware/requireUser.js';
 import { requirePartnerLink } from '../middleware/requirePartnerLink.js';
 import { getPartnerStatus } from '../services/partnerStatusService.js';
-import { recordAcknowledgment } from '../services/partnerAcknowledgmentService.js';
+import { listAcknowledgments, recordAcknowledgment } from '../services/partnerAcknowledgmentService.js';
 
 export const partnerRouter = Router();
 
@@ -19,6 +19,15 @@ partnerRouter.post('/partner/acknowledge', requireUser, requirePartnerLink, asyn
   try {
     await recordAcknowledgment(req.internalUser.id, req.internalUser.partnerId!);
     res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
+partnerRouter.get('/partner/acknowledgments', requireUser, requirePartnerLink, async (req, res, next) => {
+  try {
+    const acknowledgments = await listAcknowledgments(req.internalUser.id, req.internalUser.partnerId!);
+    res.json({ acknowledgments });
   } catch (err) {
     next(err);
   }

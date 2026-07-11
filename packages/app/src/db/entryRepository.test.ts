@@ -6,6 +6,7 @@ import { getEntriesForCycle, getFertilityStatesForCycle, recordEntry } from './e
 
 let counter = 0;
 const testNewId = () => `test-id-${++counter}`;
+const testVariantMode = async () => 'REGULAR' as const;
 
 describe('entryRepository.recordEntry', () => {
   it('creates a new cycle for the very first entry', async () => {
@@ -16,6 +17,7 @@ describe('entryRepository.recordEntry', () => {
       { bleedingType: 'NONE', mucusSensation: 'DRY', intercourse: false },
       '2026-01-01',
       testNewId,
+      testVariantMode,
     );
     const entries = await getEntriesForCycle(db, cycleId);
     expect(entries).toHaveLength(1);
@@ -36,6 +38,7 @@ describe('entryRepository.recordEntry', () => {
       },
       '2026-01-10',
       testNewId,
+      testVariantMode,
     );
     const entries = await getEntriesForCycle(db, cycleId);
     expect(entries[0]?.raw_code).toBe('10C');
@@ -49,12 +52,14 @@ describe('entryRepository.recordEntry', () => {
       { bleedingType: 'NONE', mucusSensation: 'DRY', intercourse: false },
       '2026-01-01',
       testNewId,
+      testVariantMode,
     );
     await recordEntry(
       db,
       { bleedingType: 'NONE', mucusSensation: 'WET', intercourse: true },
       '2026-01-01',
       testNewId,
+      testVariantMode,
     );
     const entries = await getEntriesForCycle(db, cycleId);
     expect(entries).toHaveLength(1);
@@ -69,12 +74,14 @@ describe('entryRepository.recordEntry', () => {
       { bleedingType: 'NONE', mucusSensation: 'DRY', intercourse: false },
       '2026-01-01',
       testNewId,
+      testVariantMode,
     );
     const second = await recordEntry(
       db,
       { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false },
       '2026-01-29',
       testNewId,
+      testVariantMode,
     );
     expect(second.cycleId).not.toBe(first.cycleId);
 
@@ -94,18 +101,21 @@ describe('entryRepository.recordEntry', () => {
       { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false },
       '2026-02-01',
       testNewId,
+      testVariantMode,
     );
     const day2 = await recordEntry(
       db,
       { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false },
       '2026-02-02',
       testNewId,
+      testVariantMode,
     );
     const day3 = await recordEntry(
       db,
       { bleedingType: 'M', mucusSensation: 'DRY', intercourse: false },
       '2026-02-03',
       testNewId,
+      testVariantMode,
     );
     expect(day2.cycleId).toBe(day1.cycleId);
     expect(day3.cycleId).toBe(day1.cycleId);
@@ -122,6 +132,7 @@ describe('entryRepository.recordEntry', () => {
       { bleedingType: 'NONE', mucusSensation: 'DRY', intercourse: false },
       '2026-01-01',
       testNewId,
+      testVariantMode,
     );
     const entries = await getEntriesForCycle(db, cycleId);
     const outboxRow = await db.getFirstAsync<{ entry_id: string; synced_at: string | null }>(
@@ -139,6 +150,7 @@ describe('entryRepository.recordEntry', () => {
       { bleedingType: 'NONE', mucusSensation: 'DRY', intercourse: false },
       '2026-01-01',
       testNewId,
+      testVariantMode,
     );
     const firstEntries = await getEntriesForCycle(db, first.cycleId);
     const firstEntryId = firstEntries[0]!.id;
@@ -148,6 +160,7 @@ describe('entryRepository.recordEntry', () => {
       { bleedingType: 'NONE', mucusSensation: 'WET', intercourse: true },
       '2026-01-01',
       testNewId,
+      testVariantMode,
     );
 
     const staleOutboxRow = await db.getFirstAsync('SELECT 1 FROM sync_outbox WHERE entry_id = ?', [firstEntryId]);
@@ -168,6 +181,7 @@ describe('entryRepository.recordEntry', () => {
       { bleedingType: 'NONE', mucusSensation: 'DRY', intercourse: false },
       '2026-01-01',
       testNewId,
+      testVariantMode,
     );
     const results = await getFertilityStatesForCycle(db, cycleId);
     expect(results).toHaveLength(1);

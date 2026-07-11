@@ -15,6 +15,7 @@ import { flush, pull, syncNow } from './syncClient';
 
 let counter = 0;
 const testNewId = () => `test-id-${++counter}`;
+const testVariantMode = async () => 'REGULAR' as const;
 const BASE_URL = 'https://api.example.test';
 const getToken = async () => 'test-token';
 
@@ -34,7 +35,7 @@ describe('flush', () => {
   it('does nothing when there is no session yet', async () => {
     const db = createTestSqlExecutor();
     await migrate(db);
-    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId);
+    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId, testVariantMode);
     await flush(db, async () => null, BASE_URL);
     expect(postEntriesMock).not.toHaveBeenCalled();
     expect(await getPendingOutboxEntries(db)).toHaveLength(1);
@@ -43,8 +44,8 @@ describe('flush', () => {
   it('marks entries synced on both created and duplicate results', async () => {
     const db = createTestSqlExecutor();
     await migrate(db);
-    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId);
-    await recordEntry(db, { bleedingType: 'NONE', mucusSensation: 'DRY', intercourse: false }, '2026-01-02', testNewId);
+    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId, testVariantMode);
+    await recordEntry(db, { bleedingType: 'NONE', mucusSensation: 'DRY', intercourse: false }, '2026-01-02', testNewId, testVariantMode);
     const [first, second] = await getPendingOutboxEntries(db);
 
     postEntriesMock.mockResolvedValue([
@@ -61,7 +62,7 @@ describe('flush', () => {
   it('leaves entries queued and records the error when the request fails', async () => {
     const db = createTestSqlExecutor();
     await migrate(db);
-    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId);
+    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId, testVariantMode);
     postEntriesMock.mockRejectedValue(new Error('network down'));
 
     await flush(db, getToken, BASE_URL);
@@ -83,7 +84,7 @@ describe('pull', () => {
   it('upserts fertility states and advances the sync_meta cursor to the response serverTime', async () => {
     const db = createTestSqlExecutor();
     await migrate(db);
-    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId);
+    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId, testVariantMode);
     const [pending] = await getPendingOutboxEntries(db);
 
     getSyncMock.mockResolvedValue({
@@ -131,7 +132,7 @@ describe('syncNow', () => {
   it('flushes before pulling', async () => {
     const db = createTestSqlExecutor();
     await migrate(db);
-    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId);
+    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId, testVariantMode);
     const [pending] = await getPendingOutboxEntries(db);
 
     postEntriesMock.mockResolvedValue([{ id: pending!.entryId, status: 'created' }]);

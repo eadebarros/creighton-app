@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #EFEBE2; }
+    * { box-sizing: border-box; }
+    @keyframes ct-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    input::placeholder { color: #A8A399; }
+  </style>
+</helmet>
+<div style="font-family:'Inter',sans-serif;min-height:100vh;background:#EFEBE2;padding:40px 24px 80px;display:flex;flex-direction:column;align-items:center;">
+
+  <div style="max-width:560px;text-align:center;margin-bottom:24px;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6B6862;margin-bottom:6px;">Creighton Tracker</div>
+    <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:500;">Sprints 2, 3 e 4 — Telas</div>
+    <div style="font-size:13px;color:#6B6862;margin-top:4px;">Autenticação &amp; onboarding · Vínculo do casal · Variantes clínicas &amp; exportação</div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:14px;background:#FFFFFF;border:1px solid #D8D3C7;border-radius:999px;padding:5px;">
+    <sc-for list="{{ sprintTabs }}" as="t" hint-placeholder-count="3">
+      <div onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</div>
+    </sc-for>
+  </div>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:600px;margin-bottom:14px;">
+    <sc-for list="{{ screenChips }}" as="s" hint-placeholder-count="5">
+      <div onClick="{{ s.onClick }}" style="{{ s.style }}">{{ s.label }}</div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ hasStateChips }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:600px;margin-bottom:28px;">
+      <sc-for list="{{ stateChips }}" as="c" hint-placeholder-count="3">
+        <div onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.label }}</div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 402 }}" height="{{ 874 }}" hint-size="402,874">
+    <div style="width:100%;height:100%;background:#F7F4EE;color:#2B2A28;overflow:hidden;position:relative;">
+
+      <!-- 2.1 WELCOME / DISCLAIMER -->
+      <sc-if value="{{ isS21 }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;overflow-y:auto;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6B6862;margin-bottom:16px;">Creighton Tracker</div>
+          <div style="font-family:'Fraunces',serif;font-size:25px;font-weight:500;line-height:1.3;margin-bottom:14px;">Acompanhamento de precisão, sob orientação de instrutora credenciada.</div>
+          <div style="font-size:14px;color:#6B6862;line-height:1.55;margin-bottom:20px;">Não é um app de bem-estar de ciclo. É um instrumento clínico de casal para o Método de Ovulação Creighton, usado em conjunto com sua instrutora.</div>
+          <div style="border:1px solid #D8D3C7;border-radius:10px;padding:16px;background:#FFFFFF;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:6px;">O que este app faz</div>
+            <div style="font-size:13px;color:#6B6862;line-height:1.5;margin-bottom:12px;">Registra suas observações diárias e calcula o padrão do ciclo segundo o método Creighton.</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:6px;">O que este app não faz</div>
+            <div style="font-size:13px;color:#6B6862;line-height:1.5;margin-bottom:12px;">Não substitui orientação médica ou da instrutora, nem faz diagnóstico.</div>
+            <div style="font-size:13px;font-weight:600;color:#3B4C63;cursor:pointer;">Ler termos completos &rarr;</div>
+          </div>
+          <div onClick="{{ toggleAck }}" style="display:flex;align-items:flex-start;gap:12px;margin-top:20px;cursor:pointer;min-height:48px;">
+            <div style="{{ checkboxStyle }}">
+              <sc-if value="{{ ack }}" hint-placeholder-val="{{ false }}">
+                <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6 L5 9 L10 2" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              </sc-if>
+            </div>
+            <div style="font-size:13px;color:#2B2A28;line-height:1.45;padding-top:2px;">Estou ciente de que este app funciona sob orientação de instrutora Creighton credenciada.</div>
+          </div>
+          <div style="margin-top:20px;">
+            <div style="{{ ackButtonStyle }}">Continuar</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- 2.2 SIGNUP -->
+      <sc-if value="{{ isS22 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;">
+          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:500;margin-bottom:6px;">Criar conta</div>
+          <div style="font-size:13px;color:#6B6862;margin-bottom:24px;">Seus dados clínicos ficam vinculados a esta conta.</div>
+
+          <sc-if value="{{ signupNotSuccess }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div>
+                <div style="font-size:12px;font-weight:600;color:#6B6862;margin-bottom:6px;">E-mail</div>
+                <input type="email" placeholder="voce@email.com" style="{{ emailInputStyle }}"></input>
+                <sc-if value="{{ signupErrorEmail }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:12px;color:#2B2A28;font-weight:600;margin-top:6px;">Endereço de e-mail inválido. Verifique e tente novamente.</div>
+                </sc-if>
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:#6B6862;margin-bottom:6px;">Senha</div>
+                <input type="password" placeholder="Mínimo 8 caracteres" style="{{ passwordInputStyle }}"></input>
+                <div style="display:flex;gap:4px;margin-top:8px;">
+                  <sc-for list="{{ strengthBars }}" as="b" hint-placeholder-count="4">
+                    <div style="{{ b }}"></div>
+                  </sc-for>
+                </div>
+                <div style="font-size:12px;color:#6B6862;margin-top:4px;">{{ strengthLabel }}</div>
+                <sc-if value="{{ signupErrorPassword }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:12px;color:#2B2A28;font-weight:600;margin-top:6px;">Senha fraca. Use ao menos 8 caracteres com letras e números.</div>
+                </sc-if>
+              </div>
+              <div style="{{ signupButtonStyle }}">{{ signupButtonLabel }}</div>
+              <div style="font-size:13px;color:#3B4C63;font-weight:600;text-align:center;cursor:pointer;margin-top:4px;">Já tenho conta</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ signupSuccess }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;">
+              <svg width="48" height="48" viewBox="0 0 52 52"><circle cx="26" cy="26" r="25" fill="none" stroke="#3B4C63" stroke-width="2"></circle><path d="M15 27 L22 34 L37 18" fill="none" stroke="#3B4C63" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <div style="font-family:'Fraunces',serif;font-size:19px;font-weight:500;">Conta criada</div>
+              <div style="font-size:13px;color:#6B6862;max-width:220px;">Avançando para a seleção do modo de acompanhamento.</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- 2.3 LOGIN -->
+      <sc-if value="{{ isS23 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;">
+          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:500;margin-bottom:24px;">Entrar</div>
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:#6B6862;margin-bottom:6px;">E-mail</div>
+              <input type="email" placeholder="voce@email.com" style="{{ loginInputStyle }}"></input>
+            </div>
+            <div>
+              <div style="font-size:12px;font-weight:600;color:#6B6862;margin-bottom:6px;">Senha</div>
+              <input type="password" placeholder="Sua senha" style="{{ loginInputStyle }}"></input>
+            </div>
+            <sc-if value="{{ loginErrorState }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size:12px;color:#2B2A28;font-weight:600;">E-mail ou senha incorretos.</div>
+            </sc-if>
+            <div style="{{ loginButtonStyle }}">{{ loginButtonLabel }}</div>
+            <div style="display:flex;justify-content:space-between;margin-top:4px;">
+              <div style="font-size:13px;color:#3B4C63;font-weight:600;cursor:pointer;">Esqueci minha senha</div>
+              <div style="font-size:13px;color:#3B4C63;font-weight:600;cursor:pointer;">Criar conta</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- 2.4 VARIANT SELECTION -->
+      <sc-if value="{{ isS24 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;">
+          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:500;margin-bottom:6px;">Qual acompanhamento se aplica hoje?</div>
+          <div style="font-size:13px;color:#6B6862;margin-bottom:22px;">Isso define como seu padrão será calculado.</div>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <sc-for list="{{ variantOptions21 }}" as="v" hint-placeholder-count="3">
+              <div onClick="{{ v.onClick }}" style="{{ v.style }}">
+                <div style="font-family:'Fraunces',serif;font-size:17px;font-weight:500;margin-bottom:4px;">{{ v.title }}</div>
+                <div style="font-size:13px;color:#6B6862;line-height:1.4;">{{ v.desc }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- 3.1 INVITE PARTNER -->
+      <sc-if value="{{ isS31 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;">
+          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:500;margin-bottom:10px;">Convidar parceiro</div>
+          <div style="font-size:13px;color:#6B6862;line-height:1.55;margin-bottom:24px;">Seu parceiro verá um status resumido do dia. Ajuste o nível de detalhe em Configurações de privacidade antes de enviar o convite.</div>
+
+          <sc-if value="{{ inviteBefore }}" hint-placeholder-val="{{ true }}">
+            <div style="{{ primaryButtonStyle }}">Gerar convite</div>
+          </sc-if>
+
+          <sc-if value="{{ inviteGenerated }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1px solid #D8D3C7;border-radius:10px;padding:22px;background:#FFFFFF;text-align:center;">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:0.06em;">7F2K-9QRT</div>
+              <div style="font-size:12px;color:#6B6862;margin-top:8px;">Válido por 24h</div>
+            </div>
+            <div style="margin-top:16px;">
+              <div style="{{ primaryButtonStyle }}">Compartilhar convite</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ inviteExpired }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1px solid #D8D3C7;border-radius:10px;padding:22px;background:#F7F4EE;text-align:center;opacity:0.6;">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:0.06em;text-decoration:line-through;">7F2K-9QRT</div>
+              <div style="font-size:12px;color:#6B6862;margin-top:8px;">Convite expirado</div>
+            </div>
+            <div style="margin-top:16px;">
+              <div style="{{ primaryButtonStyle }}">Gerar novo convite</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- 3.2 ACCEPT INVITE -->
+      <sc-if value="{{ isS32 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;">
+          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:500;margin-bottom:20px;">Aceitar convite</div>
+          <div style="font-size:12px;font-weight:600;color:#6B6862;margin-bottom:6px;">Código de convite</div>
+          <input type="text" placeholder="7F2K-9QRT" style="{{ codeInputStyle }}"></input>
+
+          <sc-if value="{{ acceptValidState }}" hint-placeholder-val="{{ true }}">
+            <div style="border:1px solid #D8D3C7;border-radius:10px;padding:16px;background:#FFFFFF;margin-top:16px;display:flex;align-items:center;gap:12px;">
+              <div style="width:40px;height:40px;border-radius:50%;background:#EFEBE2;flex-shrink:0;"></div>
+              <div>
+                <div style="font-size:14px;font-weight:600;">Você foi convidado por Marina</div>
+                <div style="font-size:12px;color:#6B6862;">Vincular sua conta a esta usuária?</div>
+              </div>
+            </div>
+            <div style="margin-top:20px;">
+              <div style="{{ primaryButtonStyle }}">Aceitar vínculo</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ acceptInvalidState }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:13px;color:#2B2A28;font-weight:600;margin-top:14px;">Código inválido ou expirado.</div>
+            <div style="margin-top:16px;">
+              <div style="{{ primaryButtonStyle }}">Pedir novo convite</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- 3.3 MAN DASHBOARD -->
+      <sc-if value="{{ isS33 }}" hint-placeholder-val="{{ false }}">
+        <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:64px 24px 28px;gap:20px;box-sizing:border-box;">
+          <sc-if value="{{ manEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="width:150px;height:150px;border-radius:50%;border:1.5px dashed #D8D3C7;"></div>
+            <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:500;text-align:center;max-width:220px;">Aguardando registro de hoje</div>
+            <div style="font-size:13px;color:#6B6862;text-align:center;max-width:220px;">Sua parceira ainda não registrou o dado. Nada para ver por aqui ainda.</div>
+          </sc-if>
+          <sc-if value="{{ manNotEmpty }}" hint-placeholder-val="{{ true }}">
+            <div style="width:150px;height:150px;border-radius:50%;background:{{ manCircleColor }};box-shadow:0 2px 10px rgba(43,42,40,0.14);"></div>
+            <div style="font-family:'Fraunces',serif;font-size:19px;font-weight:500;text-align:center;max-width:230px;">{{ manCopy }}</div>
+            <div style="border:1px solid #D8D3C7;border-radius:10px;padding:12px 20px;background:#FFFFFF;text-align:center;">
+              <div style="font-family:'Fraunces',serif;font-size:15px;font-weight:500;">Dia {{ cycleDay }} do ciclo</div>
+              <sc-if value="{{ showPeakCount }}" hint-placeholder-val="{{ false }}">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6B6862;margin-top:2px;">P+2</div>
+              </sc-if>
+            </div>
+            <div style="{{ confirmButtonStyle }}">{{ confirmLabel }}</div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- 3.4 PRIVACY SETTINGS -->
+      <sc-if value="{{ isS34 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;">
+          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:500;margin-bottom:6px;">Privacidade com o parceiro</div>
+          <div style="font-size:13px;color:#6B6862;margin-bottom:22px;">Escolha quanto detalhe seu parceiro vê no dashboard dele.</div>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <sc-for list="{{ privacyOptions }}" as="p" hint-placeholder-count="2">
+              <div onClick="{{ p.onClick }}" style="{{ p.style }}">
+                <div style="font-family:'Fraunces',serif;font-size:16px;font-weight:500;margin-bottom:4px;">{{ p.title }}</div>
+                <div style="font-size:13px;color:#6B6862;line-height:1.4;">{{ p.desc }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font-size:13px;color:#3B4C63;font-weight:600;margin-top:20px;">Opção ativa: {{ privacyActiveLabel }}</div>
+        </div>
+      </sc-if>
+
+      <!-- 3.5 CONFIRMATION HISTORY -->
+      <sc-if value="{{ isS35 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;">
+          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:500;margin-bottom:20px;">Histórico de confirmações</div>
+          <div>
+            <sc-for list="{{ historyItems }}" as="h" hint-placeholder-count="4">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #D8D3C7;">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#2B2A28;">{{ h.time }}</div>
+                <div style="font-size:13px;color:#6B6862;">{{ h.status }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- 4.1 VARIANT TRANSITION -->
+      <sc-if value="{{ isS41 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;">
+          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:500;margin-bottom:6px;">Trocar modo de acompanhamento</div>
+          <div style="border:1px solid #D8D3C7;border-radius:8px;padding:12px 14px;background:#FFFFFF;font-size:12px;color:#6B6862;line-height:1.5;margin-bottom:20px;">A troca afeta o cálculo a partir de agora — não retroativo.</div>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <sc-for list="{{ variantOptions41 }}" as="v" hint-placeholder-count="3">
+              <div onClick="{{ v.onClick }}" style="{{ v.style }}">
+                <div style="font-family:'Fraunces',serif;font-size:17px;font-weight:500;margin-bottom:4px;">{{ v.title }}</div>
+                <div style="font-size:13px;color:#6B6862;line-height:1.4;">{{ v.desc }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- 4.2 LACTATION OBSERVATION -->
+      <sc-if value="{{ isS42 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:20px;box-sizing:border-box;">
+          <div style="width:64px;height:64px;border-radius:50%;border:1.5px solid #D8D3C7;display:flex;align-items:center;justify-content:center;">
+            <div style="width:10px;height:10px;border-radius:50%;background:#3B4C63;"></div>
+          </div>
+          <div>
+            <div style="font-family:'Fraunces',serif;font-size:20px;font-weight:500;margin-bottom:6px;">Fase de observação</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:#6B6862;">Dia 4 de 15</div>
+          </div>
+          <div style="width:200px;height:6px;background:#D8D3C7;border-radius:3px;overflow:hidden;">
+            <div style="width:27%;height:100%;background:#3B4C63;"></div>
+          </div>
+          <div style="font-size:13px;color:#6B6862;line-height:1.6;max-width:250px;">Ainda sem cálculo de fertilidade utilizável. Abstinência é recomendada nesta fase do método.</div>
+        </div>
+      </sc-if>
+
+      <!-- 4.3 PIB ESTABLISHED -->
+      <sc-if value="{{ isS43 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;box-sizing:border-box;">
+          <dc-import name="StampBadge" color="yellow" raw-code="0S" day-seed="pib-demo" size="{{ 88 }}" hint-size="100,110"></dc-import>
+          <sc-if value="{{ pibActiveState }}" hint-placeholder-val="{{ true }}">
+            <div style="font-family:'Fraunces',serif;font-size:19px;font-weight:500;">Padrão infértil básico estabelecido</div>
+            <div style="font-size:13px;color:#6B6862;line-height:1.6;max-width:260px;">O selo amarelo indica que seu padrão de amamentação está identificado. A rotina segue este protocolo até nova mudança.</div>
+          </sc-if>
+          <sc-if value="{{ pibResettingState }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1.5px dashed #D8D3C7;border-radius:10px;padding:6px 14px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6B6862;">Reavaliando padrão</div>
+            <div style="font-family:'Fraunces',serif;font-size:19px;font-weight:500;">Contagem reiniciada</div>
+            <div style="font-size:13px;color:#6B6862;line-height:1.6;max-width:260px;">Uma observação recente quebrou o padrão anterior. Os 3 dias de confirmação começam novamente.</div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- 4.4 LONG CYCLE MONITORING -->
+      <sc-if value="{{ isS44 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;box-sizing:border-box;">
+          <div style="width:64px;height:64px;border-radius:50%;border:1.5px solid #D8D3C7;display:flex;align-items:center;justify-content:center;">
+            <div style="width:10px;height:10px;border-radius:50%;background:#3B4C63;"></div>
+          </div>
+          <div style="border:1px solid #D8D3C7;border-radius:8px;padding:10px 18px;font-family:'Fraunces',serif;font-size:16px;font-weight:500;">Ciclo longo sob monitoramento</div>
+          <div style="font-size:13px;color:#6B6862;line-height:1.6;max-width:250px;">Aguardando confirmação do Ápice. Comum neste modo — acompanhamento contínuo, sem prazo fixo.</div>
+        </div>
+      </sc-if>
+
+      <!-- 4.5 EXPORT PDF -->
+      <sc-if value="{{ isS45 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;">
+          <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:500;margin-bottom:16px;">Exportar para instrutora</div>
+
+          <sc-if value="{{ exportConfiguring }}" hint-placeholder-val="{{ true }}">
+            <div style="font-size:12px;font-weight:600;color:#6B6862;margin-bottom:8px;">Período</div>
+            <div style="display:flex;gap:8px;margin-bottom:20px;">
+              <sc-for list="{{ periodOptions }}" as="p" hint-placeholder-count="3">
+                <div onClick="{{ p.onClick }}" style="{{ p.style }}">{{ p.label }}</div>
+              </sc-for>
+            </div>
+            <div style="font-size:12px;font-weight:600;color:#6B6862;margin-bottom:6px;">Senha do PDF</div>
+            <input type="password" placeholder="Defina uma senha" style="{{ exportPasswordStyle }}"></input>
+            <div style="font-size:12px;color:#6B6862;margin-top:6px;margin-bottom:20px;">Essa senha não fica salva em nenhum lugar — guarde-a para compartilhar com sua instrutora.</div>
+            <div style="border:1px solid #D8D3C7;border-radius:10px;padding:14px;background:#FFFFFF;margin-bottom:20px;">
+              <div style="font-size:12px;font-weight:600;color:#6B6862;margin-bottom:8px;">Incluído no relatório</div>
+              <div style="font-size:13px;color:#2B2A28;line-height:1.7;">Gráfico do ciclo · Dados brutos de observação</div>
+            </div>
+            <div style="{{ primaryButtonStyle }}">Gerar PDF</div>
+          </sc-if>
+
+          <sc-if value="{{ exportGenerating }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+              <div style="width:36px;height:36px;border-radius:50%;border:3px solid #D8D3C7;border-top-color:#3B4C63;animation:ct-spin 0.8s linear infinite;"></div>
+              <div style="font-size:14px;color:#6B6862;">Gerando PDF protegido…</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ exportReady }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;">
+              <svg width="48" height="48" viewBox="0 0 52 52"><circle cx="26" cy="26" r="25" fill="none" stroke="#3B4C63" stroke-width="2"></circle><path d="M15 27 L22 34 L37 18" fill="none" stroke="#3B4C63" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:500;">PDF pronto</div>
+              <div style="{{ primaryButtonStyle }}">Compartilhar / baixar</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ exportErrorState }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;">
+              <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:500;">Não foi possível gerar</div>
+              <div style="font-size:13px;color:#6B6862;max-width:230px;">O período selecionado não tem dados suficientes. Escolha um intervalo com pelo menos um ciclo completo.</div>
+              <div style="{{ primaryButtonStyle }}">Escolher outro período</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+    </div>
+  </x-import>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;initialScreen&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;2.1&quot;, &quot;options&quot;: [&quot;2.1&quot;,&quot;2.2&quot;,&quot;2.3&quot;,&quot;2.4&quot;,&quot;3.1&quot;,&quot;3.2&quot;,&quot;3.3&quot;,&quot;3.4&quot;,&quot;3.5&quot;,&quot;4.1&quot;,&quot;4.2&quot;,&quot;4.3&quot;,&quot;4.4&quot;,&quot;4.5&quot;], &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Navegação&quot;},
+  &quot;showDevControls&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Navegação&quot;}
+}">
+class Component extends DCLogic {
+  state = {
+    sprint: 'sprint2',
+    screen: '2.1',
+    ack: false,
+    signupState: 'filling',
+    loginState: 'empty',
+    variant: null,
+    inviteState: 'before',
+    acceptState: 'valid',
+    manState: 'active',
+    manToken: 'green',
+    privacyLevel: 'summary',
+    transitionVariant: null,
+    pibState: 'active',
+    exportState: 'configuring',
+    exportPeriod: 'current',
+  };
+
+  cycleDay = 12;
+
+  sprintDefs = [
+    { key: 'sprint2', label: 'Sprint 2' },
+    { key: 'sprint3', label: 'Sprint 3' },
+    { key: 'sprint4', label: 'Sprint 4' },
+  ];
+
+  screensBySprint = {
+    sprint2: [
+      { id: '2.1', label: '2.1 Boas-vindas' },
+      { id: '2.2', label: '2.2 Cadastro' },
+      { id: '2.3', label: '2.3 Login' },
+      { id: '2.4', label: '2.4 Variante' },
+    ],
+    sprint3: [
+      { id: '3.1', label: '3.1 Convidar' },
+      { id: '3.2', label: '3.2 Aceitar' },
+      { id: '3.3', label: '3.3 Dash. Homem' },
+      { id: '3.4', label: '3.4 Privacidade' },
+      { id: '3.5', label: '3.5 Histórico' },
+    ],
+    sprint4: [
+      { id: '4.1', label: '4.1 Transição' },
+      { id: '4.2', label: '4.2 Observação' },
+      { id: '4.3', label: '4.3 PIB' },
+      { id: '4.4', label: '4.4 Ciclo longo' },
+      { id: '4.5', label: '4.5 Exportar PDF' },
+    ],
+  };
+
+  variantMeta = [
+    { key: 'regular', title: 'Regular', desc: 'Ciclos com padrão de fertilidade típico.' },
+    { key: 'lactation', title: 'Lactação', desc: 'Pós-parto, amamentação em curso.' },
+    { key: 'premenopause', title: 'Pré-menopausa', desc: 'Ciclos irregulares por transição hormonal.' },
+  ];
+
+  cardStyle(selected) {
+    return {
+      border: selected ? '1.5px solid #3B4C63' : '1.5px solid #D8D3C7',
+      background: selected ? '#EFEBE2' : '#FFFFFF',
+      borderRadius: '10px',
+      padding: '18px',
+      cursor: 'pointer',
+      minHeight: '48px',
+    };
+  }
+
+  chipStyle(active) {
+    return {
+      padding: '9px 16px',
+      borderRadius: '999px',
+      fontSize: '13px',
+      fontWeight: 600,
+      cursor: 'pointer',
+      color: active ? '#FFFFFF' : '#6B6862',
+      background: active ? '#3B4C63' : '#FFFFFF',
+      border: active ? 'none' : '1px solid #D8D3C7',
+    };
+  }
+
+  smallChipStyle(active) {
+    return {
+      padding: '7px 12px',
+      borderRadius: '999px',
+      fontSize: '12px',
+      fontWeight: 600,
+      cursor: 'pointer',
+      color: active ? '#FFFFFF' : '#6B6862',
+      background: active ? '#3B4C63' : '#FFFFFF',
+      border: active ? 'none' : '1px solid #D8D3C7',
+    };
+  }
+
+  inputStyle() {
+    return {
+      width: '100%',
+      minHeight: '48px',
+      border: '1.5px solid #D8D3C7',
+      borderRadius: '6px',
+      padding: '0 14px',
+      fontSize: '15px',
+      fontFamily: "'Inter',sans-serif",
+      color: '#2B2A28',
+      background: '#FFFFFF',
+      boxSizing: 'border-box',
+    };
+  }
+
+  primaryButtonStyle() {
+    return {
+      minHeight: '48px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#3B4C63',
+      color: '#FFFFFF',
+      fontSize: '15px',
+      fontWeight: 600,
+      borderRadius: '6px',
+      cursor: 'pointer',
+      width: '100%',
+      boxSizing: 'border-box',
+    };
+  }
+
+  setScreen(id, sprint) {
+    this.setState({ screen: id, sprint });
+  }
+
+  renderVals() {
+    const s = this.state;
+
+    const sprintTabs = this.sprintDefs.map(t => ({
+      label: t.label,
+      onClick: () => this.setScreen(this.screensBySprint[t.key][0].id, t.key),
+      style: this.chipStyle(s.sprint === t.key),
+    }));
+
+    const screenChips = this.screensBySprint[s.sprint].map(sc => ({
+      label: sc.label,
+      onClick: () => this.setState({ screen: sc.id }),
+      style: this.smallChipStyle(s.screen === sc.id),
+    }));
+
+    const strengthCount = s.signupState === 'errorPassword' ? 1 : 3;
+    const strengthLabels = { 1: 'Fraca', 2: 'Razoável', 3: 'Boa', 4: 'Forte' };
+    const strengthBars = Array.from({ length: 4 }, (_, i) => ({
+      height: '5px',
+      flex: 1,
+      borderRadius: '3px',
+      background: i < strengthCount ? '#3B4C63' : '#D8D3C7',
+    }));
+
+    const variantOptions21 = this.variantMeta.map(v => ({
+      title: v.title,
+      desc: v.desc,
+      onClick: () => this.setState({ variant: v.key }),
+      style: this.cardStyle(s.variant === v.key),
+    }));
+
+    const variantOptions41 = this.variantMeta.map(v => ({
+      title: v.title,
+      desc: v.desc,
+      onClick: () => this.setState({ transitionVariant: v.key }),
+      style: this.cardStyle(s.transitionVariant === v.key),
+    }));
+
+    const privacyMeta = [
+      { key: 'summary', title: 'Status resumido', desc: 'Parceiro vê apenas a cor do dia e uma mensagem indireta.' },
+      { key: 'full', title: 'Detalhe completo', desc: 'Parceiro também vê o gráfico Creighton completo.' },
+    ];
+    const privacyOptions = privacyMeta.map(p => ({
+      title: p.title,
+      desc: p.desc,
+      onClick: () => this.setState({ privacyLevel: p.key }),
+      style: this.cardStyle(s.privacyLevel === p.key),
+    }));
+    const privacyActiveLabel = (privacyMeta.find(p => p.key === s.privacyLevel) || privacyMeta[0]).title;
+
+    const historyItems = [
+      { time: 'Hoje, 8h32', status: 'Visto' },
+      { time: 'Ontem, 21h04', status: 'Visto' },
+      { time: 'Ontem, 8h15', status: 'Visto' },
+      { time: '21/06, 8h40', status: 'Visto' },
+    ];
+
+    const periodMeta = [
+      { key: 'current', label: 'Ciclo atual' },
+      { key: 'last3', label: 'Últimos 3 ciclos' },
+      { key: 'custom', label: 'Personalizado' },
+    ];
+    const periodOptions = periodMeta.map(p => ({
+      label: p.label,
+      onClick: () => this.setState({ exportPeriod: p.key }),
+      style: this.smallChipStyle(s.exportPeriod === p.key),
+    }));
+
+    const manTokenCopy = {
+      red: 'Hoje é um dia de sangramento',
+      green: 'Hoje é um dia livre',
+      white: 'Hoje é um dia de atenção',
+      yellow: 'Hoje segue a rotina de amamentação',
+    };
+    const manTokenHex = { red: '#E02424', green: '#16A34A', white: '#FFFFFF', yellow: '#EAB308' };
+
+    // state-chip rows per screen
+    let stateChips = [];
+    if (s.screen === '2.2') {
+      stateChips = [
+        { key: 'filling', label: 'Preenchendo' },
+        { key: 'errorEmail', label: 'Erro e-mail' },
+        { key: 'errorPassword', label: 'Senha fraca' },
+        { key: 'loading', label: 'Carregando' },
+        { key: 'success', label: 'Sucesso' },
+      ].map(o => ({ label: o.label, onClick: () => this.setState({ signupState: o.key }), style: this.smallChipStyle(s.signupState === o.key) }));
+    } else if (s.screen === '2.3') {
+      stateChips = [
+        { key: 'empty', label: 'Vazio' },
+        { key: 'error', label: 'Erro de credencial' },
+        { key: 'loading', label: 'Carregando' },
+      ].map(o => ({ label: o.label, onClick: () => this.setState({ loginState: o.key }), style: this.smallChipStyle(s.loginState === o.key) }));
+    } else if (s.screen === '3.1') {
+      stateChips = [
+        { key: 'before', label: 'Antes de gerar' },
+        { key: 'generated', label: 'Gerado' },
+        { key: 'expired', label: 'Expirado' },
+      ].map(o => ({ label: o.label, onClick: () => this.setState({ inviteState: o.key }), style: this.smallChipStyle(s.inviteState === o.key) }));
+    } else if (s.screen === '3.2') {
+      stateChips = [
+        { key: 'valid', label: 'Código válido' },
+        { key: 'invalid', label: 'Inválido / expirado' },
+      ].map(o => ({ label: o.label, onClick: () => this.setState({ acceptState: o.key }), style: this.smallChipStyle(s.acceptState === o.key) }));
+    } else if (s.screen === '3.3') {
+      stateChips = [
+        { key: 'empty', label: 'Sem registro' },
+        { key: 'active', label: 'Ativo' },
+        { key: 'confirmed', label: 'Confirmado' },
+      ].map(o => ({ label: o.label, onClick: () => this.setState({ manState: o.key }), style: this.smallChipStyle(s.manState === o.key) }));
+      if (s.manState !== 'empty') {
+        stateChips = stateChips.concat(['red', 'green', 'white', 'yellow'].map(k => ({
+          label: k, onClick: () => this.setState({ manToken: k }), style: this.smallChipStyle(s.manToken === k),
+        })));
+      }
+    } else if (s.screen === '4.3') {
+      stateChips = [
+        { key: 'active', label: 'PIB estabelecido' },
+        { key: 'resetting', label: 'Reiniciando contagem' },
+      ].map(o => ({ label: o.label, onClick: () => this.setState({ pibState: o.key }), style: this.smallChipStyle(s.pibState === o.key) }));
+    } else if (s.screen === '4.5') {
+      stateChips = [
+        { key: 'configuring', label: 'Configurando' },
+        { key: 'generating', label: 'Gerando' },
+        { key: 'ready', label: 'Pronto' },
+        { key: 'error', label: 'Erro' },
+      ].map(o => ({ label: o.label, onClick: () => this.setState({ exportState: o.key }), style: this.smallChipStyle(s.exportState === o.key) }));
+    }
+
+    return {
+      sprintTabs,
+      screenChips,
+      hasStateChips: stateChips.length > 0,
+      stateChips,
+
+      isS21: s.screen === '2.1',
+      isS22: s.screen === '2.2',
+      isS23: s.screen === '2.3',
+      isS24: s.screen === '2.4',
+      isS31: s.screen === '3.1',
+      isS32: s.screen === '3.2',
+      isS33: s.screen === '3.3',
+      isS34: s.screen === '3.4',
+      isS35: s.screen === '3.5',
+      isS41: s.screen === '4.1',
+      isS42: s.screen === '4.2',
+      isS43: s.screen === '4.3',
+      isS44: s.screen === '4.4',
+      isS45: s.screen === '4.5',
+
+      // 2.1
+      ack: s.ack,
+      toggleAck: () => this.setState({ ack: !s.ack }),
+      checkboxStyle: {
+        width: '22px', height: '22px', borderRadius: '4px', flexShrink: 0,
+        border: s.ack ? 'none' : '1.5px solid #D8D3C7',
+        background: s.ack ? '#3B4C63' : '#FFFFFF',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      },
+      ackButtonStyle: {
+        minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: s.ack ? '#3B4C63' : '#D8D3C7',
+        color: s.ack ? '#FFFFFF' : '#9A9588',
+        fontSize: '15px', fontWeight: 600, borderRadius: '6px',
+        cursor: s.ack ? 'pointer' : 'default', width: '100%', boxSizing: 'border-box',
+      },
+
+      // 2.2
+      signupNotSuccess: s.signupState !== 'success',
+      signupSuccess: s.signupState === 'success',
+      signupErrorEmail: s.signupState === 'errorEmail',
+      signupErrorPassword: s.signupState === 'errorPassword',
+      emailInputStyle: { ...this.inputStyle(), border: s.signupState === 'errorEmail' ? '1.5px solid #2B2A28' : '1.5px solid #D8D3C7' },
+      passwordInputStyle: { ...this.inputStyle(), border: s.signupState === 'errorPassword' ? '1.5px solid #2B2A28' : '1.5px solid #D8D3C7' },
+      strengthBars,
+      strengthLabel: strengthLabels[strengthCount],
+      signupButtonStyle: {
+        ...this.primaryButtonStyle(),
+        opacity: s.signupState === 'loading' ? 0.7 : 1,
+      },
+      signupButtonLabel: s.signupState === 'loading' ? 'Criando conta…' : 'Criar conta',
+
+      // 2.3
+      loginErrorState: s.loginState === 'error',
+      loginInputStyle: this.inputStyle(),
+      loginButtonStyle: { ...this.primaryButtonStyle(), opacity: s.loginState === 'loading' ? 0.7 : 1 },
+      loginButtonLabel: s.loginState === 'loading' ? 'Entrando…' : 'Entrar',
+
+      // 2.4
+      variantOptions21,
+
+      // 3.1
+      inviteBefore: s.inviteState === 'before',
+      inviteGenerated: s.inviteState === 'generated',
+      inviteExpired: s.inviteState === 'expired',
+      primaryButtonStyle: this.primaryButtonStyle(),
+
+      // 3.2
+      acceptValidState: s.acceptState === 'valid',
+      acceptInvalidState: s.acceptState === 'invalid',
+      codeInputStyle: this.inputStyle(),
+
+      // 3.3
+      cycleDay: this.cycleDay,
+      manEmpty: s.manState === 'empty',
+      manNotEmpty: s.manState !== 'empty',
+      manCircleColor: manTokenHex[s.manToken],
+      manCopy: manTokenCopy[s.manToken],
+      showPeakCount: s.manToken === 'yellow',
+      confirmLabel: s.manState === 'confirmed' ? 'Visto' : 'Confirmar que vi',
+      confirmButtonStyle: {
+        fontSize: '13px', fontWeight: 600,
+        color: s.manState === 'confirmed' ? '#6B6862' : '#3B4C63',
+        border: '1px solid ' + (s.manState === 'confirmed' ? '#D8D3C7' : '#3B4C63'),
+        borderRadius: '6px', padding: '10px 20px', cursor: 'pointer',
+        minHeight: '44px', display: 'flex', alignItems: 'center',
+      },
+
+      // 3.4
+      privacyOptions,
+      privacyActiveLabel,
+
+      // 3.5
+      historyItems,
+
+      // 4.1
+      variantOptions41,
+
+      // 4.3
+      pibActiveState: s.pibState === 'active',
+      pibResettingState: s.pibState === 'resetting',
+
+      // 4.5
+      exportConfiguring: s.exportState === 'configuring',
+      exportGenerating: s.exportState === 'generating',
+      exportReady: s.exportState === 'ready',
+      exportErrorState: s.exportState === 'error',
+      periodOptions,
+      exportPasswordStyle: this.inputStyle(),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

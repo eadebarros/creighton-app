@@ -12,6 +12,7 @@ import { recordEntry } from '../../db/entryRepository';
 import { today } from '../../domain/dateMath';
 import type { CaptureAnswers } from '../../domain/mapping';
 import { getApiBaseUrl } from '../../api/config';
+import { getCachedVariantMode } from '../../settings/variantModeCache';
 import { syncNow } from '../../sync/syncClient';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Intercourse'>;
@@ -38,7 +39,7 @@ export function IntercourseScreen({ navigation }: Props) {
     };
 
     const db = await getDb();
-    await recordEntry(db, completeAnswers, today(), newId);
+    await recordEntry(db, completeAnswers, today(), newId, getCachedVariantMode);
     // Fire-and-forget: don't block navigation on network — the outbox row
     // just written stays queued and gets picked up by the background sync
     // (useSyncLifecycle) if this fails or the device is offline.

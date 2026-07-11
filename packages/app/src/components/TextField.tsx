@@ -44,11 +44,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   inputError: {
-    borderColor: colors.red,
+    // Not colors.red — that token is reserved for clinical bleeding/menstruation
+    // meaning (Seção 9.1), never repurposed for generic form validation.
+    borderColor: colors.ink,
   },
   error: {
-    fontFamily: fonts.body.regular,
+    fontFamily: fonts.body.semiBold,
     fontSize: 12,
-    color: colors.red,
+    color: colors.ink,
   },
 });

@@ -52,6 +52,20 @@ async function currentStateByDate(cycleId: string) {
   return new Map(states.map((s) => [s.dailyEntry.date.toISOString().slice(0, 10), s]));
 }
 
+/** A LACTATION cycle: observation (days 1-15), PIB established on day 18, then a deviation on day 20. */
+function buildLactationEntries(cycleId: string, start: string) {
+  const cycle = { id: cycleId, startDate: start, endDate: null, isActive: true, variantModeSnapshot: 'LACTATION' as const };
+  const dry = (date: string) => buildEntry(cycleId, date, { cycle });
+  return [
+    ...Array.from({ length: 15 }, (_, i) => dry(addDays(start, i))), // days 1-15: observation
+    dry(addDays(start, 15)), // day 16
+    dry(addDays(start, 16)), // day 17
+    dry(addDays(start, 17)), // day 18 — established, still FERTILE
+    dry(addDays(start, 18)), // day 19 — first PIB_ACTIVE day
+    buildEntry(cycleId, addDays(start, 19), { cycle, mucusSensation: 'WET' }), // day 20 — deviation breaks it
+  ];
+}
+
 describe('peak confirmation + retroactive recompute', () => {
   const start = '2026-04-01';
 
@@ -129,5 +143,28 @@ describe('peak confirmation + retroactive recompute', () => {
 
     const count = await prisma.dailyEntry.count({ where: { cycleId } });
     expect(count).toBe(3);
+  });
+});
+
+describe('LACTATION variant recompute', () => {
+  const start = '2026-05-01';
+
+  it('is no longer variant-blind — persists pibActive and updates it as the PIB establishes/breaks', async () => {
+    const cycleId = randomUUID();
+    const entries = buildLactationEntries(cycleId, start);
+
+    for (const entry of entries) {
+      const res = await request(app).post('/entries').send({ entries: [entry] });
+      expect(res.status).toBe(200);
+    }
+
+    const byDate = await currentStateByDate(cycleId);
+    expect(byDate.get(addDays(start, 0))).toMatchObject({ computedState: 'FERTILE', pibActive: false });
+    expect(byDate.get(addDays(start, 17))).toMatchObject({ computedState: 'FERTILE', pibActive: false });
+    expect(byDate.get(addDays(start, 18))).toMatchObject({ computedState: 'INFERTILE_ALTERNATING', pibActive: true });
+    expect(byDate.get(addDays(start, 19))).toMatchObject({ computedState: 'FERTILE', pibActive: false });
+
+    const cycle = await prisma.cycle.findUniqueOrThrow({ where: { id: cycleId } });
+    expect(cycle.confirmedPeakDay).toBeNull(); // peak/Ápice tracking doesn't apply to LACTATION
   });
 });

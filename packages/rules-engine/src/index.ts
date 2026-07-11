@@ -1,5 +1,6 @@
 import { assignStates } from './fertilityState.js';
 import { findConfirmedPeak } from './peakTracker.js';
+import { assignLactationStates } from './variantLactation.js';
 import type { DailyEntryInput, DailyFertilityState, VariantMode } from './types.js';
 import { VariantNotImplementedError } from './types.js';
 
@@ -17,6 +18,9 @@ export function computeFertilityStates(
   entries: DailyEntryInput[],
   variantMode: VariantMode,
 ): DailyFertilityState[] {
+  if (variantMode === 'LACTATION') {
+    return assignLactationStates(entries);
+  }
   if (variantMode !== 'REGULAR') {
     throw new VariantNotImplementedError(variantMode);
   }
@@ -27,6 +31,7 @@ export function computeFertilityStates(
 export { deriveRawCode } from './vdrsLookup.js';
 export { findConfirmedPeak } from './peakTracker.js';
 export { assignStates } from './fertilityState.js';
+export { assignLactationStates } from './variantLactation.js';
 export * from './types.js';
 export * from './cycleBoundary.js';
 export * from './colorToken.js';

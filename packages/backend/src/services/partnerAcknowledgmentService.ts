@@ -10,3 +10,23 @@ export async function recordAcknowledgment(partnerUserId: string, primaryUserId:
     update: {},
   });
 }
+
+export interface AcknowledgmentSummary {
+  date: string;
+  acknowledgedAt: string;
+}
+
+/** The calling partner's own acknowledgment history for their linked primary, most recent first. */
+export async function listAcknowledgments(
+  partnerUserId: string,
+  primaryUserId: string,
+): Promise<AcknowledgmentSummary[]> {
+  const rows = await prisma.partnerAcknowledgment.findMany({
+    where: { partnerUserId, primaryUserId },
+    orderBy: { date: 'desc' },
+  });
+  return rows.map((row) => ({
+    date: toIsoDate(row.date),
+    acknowledgedAt: row.acknowledgedAt.toISOString(),
+  }));
+}

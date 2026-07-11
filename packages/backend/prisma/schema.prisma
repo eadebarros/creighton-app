@@ -147,6 +147,8 @@ model DailyFertilityState {
   dailyEntry        DailyEntry            @relation(fields: [dailyEntryId], references: [id])
   computedState     FertilityState        @map("computed_state")
   peakRelation      PeakRelation          @map("peak_relation")
+  /// Only meaningful for LACTATION cycles — true exactly when computedState is INFERTILE_ALTERNATING under an established PIB (Seção 3.5).
+  pibActive         Boolean               @default(false) @map("pib_active")
   computedAt        DateTime              @default(now()) @map("computed_at")
   ruleEngineVersion String                @map("rule_engine_version")
   supersededById    String?               @unique @map("superseded_by") @db.Uuid

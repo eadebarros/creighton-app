@@ -7,8 +7,10 @@ import { getApiBaseUrl } from '../api/config';
 import { getDb } from '../db/client';
 import { getCycleCount } from '../db/cycleRepository';
 import { resetLocalData } from '../db/schema';
+import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
 import { RoleChoiceScreen } from '../screens/onboarding/RoleChoiceScreen';
 import { PartnerDashboardScreen } from '../screens/partner/PartnerDashboardScreen';
+import { setCachedVariantMode } from '../settings/variantModeCache';
 import { colors, fonts, spacing } from '../theme';
 import { shouldShowRoleChoice } from './roleChoiceGate';
 import { RootNavigator } from './RootNavigator';
@@ -38,7 +40,8 @@ async function ensureLocalDataMatchesSignedInUser(userId: string): Promise<void>
 type Stage =
   | { kind: 'loading' }
   | { kind: 'error' }
-  | { kind: 'roleChoice' }
+  | { kind: 'roleChoice'; needsOnboarding: boolean }
+  | { kind: 'onboarding' }
   | { kind: 'primary' }
   | { kind: 'partner' };
 
@@ -75,16 +78,36 @@ export function RoleGate() {
         return;
       }
       const me = await getMe(getApiBaseUrl(), token);
-      await SecureStore.setItemAsync(ROLE_CACHE_KEY, me.role);
+      // Defensive: an older deployed backend (or a malformed response) may
+      // omit this field — never let a missing/undefined value throw here and
+      // get mislabeled as the generic "no connection" error below.
+      if (me.currentVariantMode) {
+        await setCachedVariantMode(me.currentVariantMode);
+      }
 
       if (me.role === 'COOP_PARTNER') {
+        await SecureStore.setItemAsync(ROLE_CACHE_KEY, me.role);
         setStage({ kind: 'partner' });
         return;
       }
 
       const db = await getDb();
       const cycleCount = await getCycleCount(db);
-      setStage(shouldShowRoleChoice(me, cycleCount) ? { kind: 'roleChoice' } : { kind: 'primary' });
+      if (shouldShowRoleChoice(me, cycleCount)) {
+        // Don't cache a role yet — she hasn't actually chosen one. Caching
+        // PRIMARY_OBSERVER here would make a relaunch skip this screen
+        // entirely if the app were killed before she picks. Whether
+        // onboarding (disclaimer + variant) comes after that choice depends
+        // on the same instructorCredentialAck flag checked below.
+        setStage({ kind: 'roleChoice', needsOnboarding: !me.instructorCredentialAck });
+      } else if (!me.instructorCredentialAck) {
+        // An existing PRIMARY_OBSERVER (already has local cycles) who
+        // hasn't acknowledged yet — shown once, retroactively.
+        setStage({ kind: 'onboarding' });
+      } else {
+        await SecureStore.setItemAsync(ROLE_CACHE_KEY, me.role);
+        setStage({ kind: 'primary' });
+      }
     } catch {
       if (!cached) {
         setStage({ kind: 'error' });
@@ -93,9 +116,13 @@ export function RoleGate() {
     }
   }
 
+  // getToken's reference is not stable across renders (Clerk doesn't memoize
+  // it) — depending on it here would re-trigger this effect on every state
+  // update from resolve() itself, looping forever. Only the actual
+  // signed-in identity changing should re-resolve.
   useEffect(() => {
     resolve();
-  }, [getToken, userId]);
+  }, [userId]);
 
   switch (stage.kind) {
     case 'loading':
@@ -116,8 +143,17 @@ export function RoleGate() {
     case 'roleChoice':
       return (
         <RoleChoiceScreen
-          onChoosePrimary={() => setStage({ kind: 'primary' })}
+          onChoosePrimary={() => setStage(stage.needsOnboarding ? { kind: 'onboarding' } : { kind: 'primary' })}
           onLinkedAsPartner={() => setStage({ kind: 'partner' })}
+        />
+      );
+    case 'onboarding':
+      return (
+        <OnboardingScreen
+          onDone={() => {
+            SecureStore.setItemAsync(ROLE_CACHE_KEY, 'PRIMARY_OBSERVER');
+            setStage({ kind: 'primary' });
+          }}
         />
       );
     case 'partner':

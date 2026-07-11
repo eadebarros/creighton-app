@@ -89,12 +89,31 @@ export async function getSync(baseUrl: string, token: string, since: string): Pr
 export interface MeResponse {
   role: 'PRIMARY_OBSERVER' | 'COOP_PARTNER';
   partner: { email: string } | null;
+  instructorCredentialAck: boolean;
+  currentVariantMode: VariantMode;
 }
 
 export async function getMe(baseUrl: string, token: string): Promise<MeResponse> {
   const res = await fetch(`${baseUrl}/me`, { headers: { Authorization: `Bearer ${token}` } });
   if (!res.ok) {
     throw new Error(`GET /me failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export interface PatchMeBody {
+  instructorCredentialAck?: boolean;
+  currentVariantMode?: VariantMode;
+}
+
+export async function patchMe(baseUrl: string, token: string, body: PatchMeBody): Promise<MeResponse> {
+  const res = await fetch(`${baseUrl}/me`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new Error(`PATCH /me failed: ${res.status}`);
   }
   return res.json();
 }
@@ -158,4 +177,18 @@ export async function postPartnerAcknowledge(baseUrl: string, token: string): Pr
   if (!res.ok) {
     throw new Error(`POST /partner/acknowledge failed: ${res.status}`);
   }
+}
+
+export interface AcknowledgmentSummary {
+  date: string;
+  acknowledgedAt: string;
+}
+
+export async function getPartnerAcknowledgments(baseUrl: string, token: string): Promise<AcknowledgmentSummary[]> {
+  const res = await fetch(`${baseUrl}/partner/acknowledgments`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) {
+    throw new Error(`GET /partner/acknowledgments failed: ${res.status}`);
+  }
+  const body: { acknowledgments: AcknowledgmentSummary[] } = await res.json();
+  return body.acknowledgments;
 }

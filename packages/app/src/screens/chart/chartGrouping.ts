@@ -1,4 +1,4 @@
-import type { BleedingType, FertilityState, PeakRelation } from '@creighton/rules-engine';
+import type { BleedingType, FertilityState, LactationPhase, PeakRelation } from '@creighton/rules-engine';
 
 export interface ChartDay {
   date: string;
@@ -7,6 +7,8 @@ export interface ChartDay {
   intercourse: boolean;
   computedState: FertilityState;
   peakRelation: PeakRelation;
+  pibActive?: boolean;
+  lactationPhase?: LactationPhase;
 }
 
 export type PhaseLabel = 'Menstruação' | 'Infértil' | 'Fértil' | 'Pós-Ápice';

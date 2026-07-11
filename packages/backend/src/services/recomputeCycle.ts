@@ -1,5 +1,5 @@
 import type { Prisma } from '@prisma/client';
-import { assignStates, findConfirmedPeak, RULES_ENGINE_VERSION } from '@creighton/rules-engine';
+import { computeFertilityStates, findConfirmedPeak, RULES_ENGINE_VERSION } from '@creighton/rules-engine';
 import { entryToInput, toIsoDate } from '../domain/mapping.js';
 
 /**
@@ -23,8 +23,7 @@ export async function recomputeCycleFertilityStates(tx: Prisma.TransactionClient
   const entries = await tx.dailyEntry.findMany({ where: { cycleId }, orderBy: { date: 'asc' } });
   const inputs = entries.map(entryToInput);
 
-  const peakResult = findConfirmedPeak(inputs);
-  const computed = assignStates(inputs, peakResult);
+  const computed = computeFertilityStates(inputs, cycle.variantModeSnapshot);
 
   // Zip rules-engine output back to entry rows by date — never by array
   // index. Both `entries` and `computed` happen to be date-ascending here,
@@ -48,19 +47,25 @@ export async function recomputeCycleFertilityStates(tx: Prisma.TransactionClient
 
     const current = currentByEntryId.get(entryId) ?? null;
 
+    const pibActive = result.pibActive ?? false;
+
     if (!current) {
       await tx.dailyFertilityState.create({
         data: {
           dailyEntryId: entryId,
           computedState: result.computedState,
           peakRelation: result.peakRelation,
+          pibActive,
           ruleEngineVersion: RULES_ENGINE_VERSION,
         },
       });
       continue;
     }
 
-    const unchanged = current.computedState === result.computedState && current.peakRelation === result.peakRelation;
+    const unchanged =
+      current.computedState === result.computedState &&
+      current.peakRelation === result.peakRelation &&
+      current.pibActive === pibActive;
     if (unchanged) {
       continue;
     }
@@ -70,6 +75,7 @@ export async function recomputeCycleFertilityStates(tx: Prisma.TransactionClient
         dailyEntryId: entryId,
         computedState: result.computedState,
         peakRelation: result.peakRelation,
+        pibActive,
         ruleEngineVersion: RULES_ENGINE_VERSION,
       },
     });
@@ -79,15 +85,20 @@ export async function recomputeCycleFertilityStates(tx: Prisma.TransactionClient
     });
   }
 
-  // Peak confirmation is set-once — findConfirmedPeak's state machine never un-confirms
-  // a peak once found, so this never needs to un-set confirmedPeakDay.
-  if (peakResult.confirmed !== null && cycle.confirmedPeakDay === null) {
-    await tx.cycle.update({
-      where: { id: cycleId },
-      data: {
-        confirmedPeakDay: new Date(`${peakResult.confirmed.date}T00:00:00Z`),
-        peakDayConfirmedAt: new Date(),
-      },
-    });
+  // Peak/Ápice tracking only applies to REGULAR (Seção 3.5 — Lactação has no
+  // Tc/Ápice concept, only the PIB mechanism above). Peak confirmation is
+  // set-once — findConfirmedPeak's state machine never un-confirms a peak
+  // once found, so this never needs to un-set confirmedPeakDay.
+  if (cycle.variantModeSnapshot === 'REGULAR') {
+    const peakResult = findConfirmedPeak(inputs);
+    if (peakResult.confirmed !== null && cycle.confirmedPeakDay === null) {
+      await tx.cycle.update({
+        where: { id: cycleId },
+        data: {
+          confirmedPeakDay: new Date(`${peakResult.confirmed.date}T00:00:00Z`),
+          peakDayConfirmedAt: new Date(),
+        },
+      });
+    }
   }
 }

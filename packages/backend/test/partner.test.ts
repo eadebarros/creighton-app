@@ -15,6 +15,12 @@ import { TEST_CLERK_USER_ID } from './mockClerk.js';
 const app = createApp();
 const PARTNER_ID = 'user_partner_test';
 
+function addDays(date: string, n: number): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
 beforeEach(async () => {
   await resetDb();
 });
@@ -56,6 +62,28 @@ describe('GET /partner/status', () => {
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ hasActiveCycle: true, colorToken: 'RED', asOfDate: today, cycleDay: 1 });
   });
+
+  it('reports YELLOW once the primary is under an active PIB (LACTATION)', async () => {
+    await linkPartner();
+    const cycleId = randomUUID();
+    const start = '2026-06-01';
+    const cycle = { id: cycleId, startDate: start, endDate: null, isActive: true, variantModeSnapshot: 'LACTATION' as const };
+    const dry = (date: string) => buildEntry(cycleId, date, { cycle });
+    const entries = [
+      ...Array.from({ length: 15 }, (_, i) => dry(addDays(start, i))), // observation
+      dry(addDays(start, 15)), // day 16
+      dry(addDays(start, 16)), // day 17
+      dry(addDays(start, 17)), // day 18 — established
+      dry(addDays(start, 18)), // day 19 — first PIB_ACTIVE day
+    ];
+
+    const entriesRes = await request(app).post('/entries').set(asUser(TEST_CLERK_USER_ID)).send({ entries });
+    expect(entriesRes.status).toBe(200);
+
+    const res = await request(app).get('/partner/status').set(asUser(PARTNER_ID));
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ hasActiveCycle: true, colorToken: 'YELLOW' });
+  });
 });
 
 describe('POST /partner/acknowledge', () => {
@@ -73,5 +101,23 @@ describe('POST /partner/acknowledge', () => {
 
     const status = await request(app).get('/partner/status').set(asUser(PARTNER_ID));
     expect(status.body.acknowledgedToday).toBe(true);
+  });
+});
+
+describe('GET /partner/acknowledgments', () => {
+  it('rejects a caller who is not a linked COOP_PARTNER', async () => {
+    const res = await request(app).get('/partner/acknowledgments').set(asUser(TEST_CLERK_USER_ID));
+    expect(res.status).toBe(403);
+  });
+
+  it('is empty before any acknowledgment, then has one entry after acknowledging today', async () => {
+    await linkPartner();
+    const before = await request(app).get('/partner/acknowledgments').set(asUser(PARTNER_ID));
+    expect(before.body.acknowledgments).toEqual([]);
+
+    await request(app).post('/partner/acknowledge').set(asUser(PARTNER_ID));
+    const after = await request(app).get('/partner/acknowledgments').set(asUser(PARTNER_ID));
+    expect(after.body.acknowledgments).toHaveLength(1);
+    expect(after.body.acknowledgments[0]).toMatchObject({ date: new Date().toISOString().slice(0, 10) });
   });
 });

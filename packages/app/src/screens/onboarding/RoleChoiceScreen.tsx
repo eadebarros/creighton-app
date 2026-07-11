@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/expo';
 import * as SecureStore from 'expo-secure-store';
@@ -53,6 +53,7 @@ function RedeemInviteForm({ onBack, onLinked }: { onBack: () => void; onLinked: 
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [linkedEmail, setLinkedEmail] = useState<string | null>(null);
 
   async function handleRedeem() {
     setError(null);
@@ -62,14 +63,25 @@ function RedeemInviteForm({ onBack, onLinked }: { onBack: () => void; onLinked: 
       if (!token) {
         throw new Error('Sessão expirada — tente novamente.');
       }
-      await redeemPartnerInvite(getApiBaseUrl(), token, code.trim().toUpperCase());
+      const cleanCode = code.trim().toUpperCase().replace(/-/g, '');
+      const result = await redeemPartnerInvite(getApiBaseUrl(), token, cleanCode);
       await SecureStore.setItemAsync(ROLE_CACHE_KEY, 'COOP_PARTNER');
-      onLinked();
+      setLinkedEmail(result.partnerEmail);
+      setTimeout(onLinked, 1200);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Não foi possível validar o código.');
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (linkedEmail) {
+    return (
+      <View style={[styles.screen, styles.centered, { paddingTop: insets.top }]}>
+        <Text style={styles.title}>Vinculado</Text>
+        <Text style={styles.subtitle}>Você está conectado a {linkedEmail}.</Text>
+      </View>
+    );
   }
 
   return (
@@ -99,6 +111,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.paper,
     paddingHorizontal: spacing.xl,
     gap: spacing.md,
+  },
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontFamily: fonts.display.medium,

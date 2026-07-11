@@ -6,6 +6,7 @@ import { buildOutboxPayload, getPendingOutboxEntries, markOutboxFailed, markOutb
 
 let counter = 0;
 const testNewId = () => `test-id-${++counter}`;
+const testVariantMode = async () => 'REGULAR' as const;
 
 describe('outboxRepository', () => {
   it('getPendingOutboxEntries returns queued entries in queued_at order, excluding synced ones', async () => {
@@ -16,8 +17,15 @@ describe('outboxRepository', () => {
       { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false },
       '2026-01-01',
       testNewId,
+      testVariantMode,
     );
-    await recordEntry(db, { bleedingType: 'NONE', mucusSensation: 'DRY', intercourse: false }, '2026-01-02', testNewId);
+    await recordEntry(
+      db,
+      { bleedingType: 'NONE', mucusSensation: 'DRY', intercourse: false },
+      '2026-01-02',
+      testNewId,
+      testVariantMode,
+    );
 
     const pending = await getPendingOutboxEntries(db);
     expect(pending).toHaveLength(2);
@@ -32,7 +40,13 @@ describe('outboxRepository', () => {
   it('markOutboxFailed increments attempt_count and records the error', async () => {
     const db = createTestSqlExecutor();
     await migrate(db);
-    await recordEntry(db, { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false }, '2026-01-01', testNewId);
+    await recordEntry(
+      db,
+      { bleedingType: 'H', mucusSensation: 'DRY', intercourse: false },
+      '2026-01-01',
+      testNewId,
+      testVariantMode,
+    );
     const [pending] = await getPendingOutboxEntries(db);
 
     await markOutboxFailed(db, pending!.entryId, 'network error');
@@ -54,6 +68,7 @@ describe('outboxRepository', () => {
       },
       '2026-01-10',
       testNewId,
+      testVariantMode,
     );
     const [pending] = await getPendingOutboxEntries(db);
 

@@ -27,6 +27,7 @@ export function ChartScreen({ navigation }: Props) {
   const { signOut } = useAuth();
   const [groups, setGroups] = useState<PhaseGroup[] | null>(null);
   const [dayNumberByDate, setDayNumberByDate] = useState<Map<string, number>>(new Map());
+  const [inObservationPhase, setInObservationPhase] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,10 +46,13 @@ export function ChartScreen({ navigation }: Props) {
         intercourse: row.intercourse === 1,
         computedState: state.computedState,
         peakRelation: state.peakRelation,
+        pibActive: state.pibActive,
+        lactationPhase: state.lactationPhase,
       }));
       if (!cancelled) {
         setDayNumberByDate(new Map(days.map((day, i) => [day.date, i + 1])));
         setGroups(groupByContiguousPhase(days));
+        setInObservationPhase(days[days.length - 1]?.lactationPhase === 'OBSERVATION');
       }
     })();
     return () => {
@@ -86,6 +90,9 @@ export function ChartScreen({ navigation }: Props) {
         {groups?.length === 0 && (
           <Text style={styles.subtitle}>Nenhum ciclo registrado ainda.</Text>
         )}
+        {inObservationPhase && (
+          <Text style={styles.observationBanner}>Fase de observação: abstinência recomendada.</Text>
+        )}
         {groups?.map((group) => (
           <View key={`${group.label}-${group.days[0]?.date}`} style={styles.group}>
             <Text style={styles.groupLabel}>{group.label.toUpperCase()}</Text>
@@ -93,7 +100,11 @@ export function ChartScreen({ navigation }: Props) {
               {group.days.map((day) => (
                 <View key={day.date} style={styles.dayColumn}>
                   <StampBadge
-                    color={stateToToken({ bleedingType: day.bleedingType, computedState: day.computedState })}
+                    color={stateToToken({
+                      bleedingType: day.bleedingType,
+                      computedState: day.computedState,
+                      pibActive: day.pibActive,
+                    })}
                     rawCode={day.rawCode}
                     intercourse={day.intercourse}
                     peakLabel={peakRelationLabel(day.peakRelation) ?? undefined}
@@ -167,6 +178,14 @@ const styles = StyleSheet.create({
   },
   body: {
     paddingBottom: spacing.xl,
+  },
+  observationBanner: {
+    fontFamily: fonts.body.semiBold,
+    fontSize: 13,
+    color: colors.ink,
+    textAlign: 'center',
+    marginTop: spacing.lg,
+    marginHorizontal: spacing.xl,
   },
   group: {
     marginTop: spacing.lg,

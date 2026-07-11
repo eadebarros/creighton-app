@@ -1,8 +1,8 @@
 import { computeFertilityStates, deriveRawCode, resolveCycleForNewEntry } from '@creighton/rules-engine';
-import type { DailyFertilityState } from '@creighton/rules-engine';
+import type { DailyFertilityState, VariantMode } from '@creighton/rules-engine';
 import { answersToEntryInput, entryInputToRowValues, rowToEntryInput } from '../domain/mapping';
 import type { CaptureAnswers, DailyEntryRow } from '../domain/mapping';
-import { closeCycle, createCycle, getActiveCycle } from './cycleRepository';
+import { closeCycle, createCycle, getActiveCycle, getCycleVariantMode } from './cycleRepository';
 import type { SqlExecutor } from './executor';
 
 export async function getEntriesForCycle(db: SqlExecutor, cycleId: string): Promise<DailyEntryRow[]> {
@@ -39,7 +39,8 @@ export async function getFertilityStatesForCycle(
   cycleId: string,
 ): Promise<{ row: DailyEntryRow; state: DailyFertilityState }[]> {
   const rows = await getEntriesForCycle(db, cycleId);
-  const states = computeFertilityStates(rows.map(rowToEntryInput), 'REGULAR');
+  const variantMode = await getCycleVariantMode(db, cycleId);
+  const states = computeFertilityStates(rows.map(rowToEntryInput), variantMode);
   return rows.map((row, i) => ({ row, state: states[i]! }));
 }
 
@@ -59,6 +60,7 @@ export async function recordEntry(
   answers: CaptureAnswers,
   date: string,
   newId: () => string,
+  getVariantMode: () => Promise<VariantMode>,
 ): Promise<{ cycleId: string }> {
   const activeCycle = await getActiveCycle(db);
   const lastEntry = activeCycle ? await getMostRecentEntry(db, activeCycle.id) : null;
@@ -69,7 +71,8 @@ export async function recordEntry(
     if (action.closePreviousCycle) {
       await closeCycle(db, action.closePreviousCycle.id, action.closePreviousCycle.endDate);
     }
-    cycleId = await createCycle(db, action.startDate, newId);
+    const variantMode = await getVariantMode();
+    cycleId = await createCycle(db, action.startDate, newId, variantMode);
   } else {
     cycleId = action.cycleId;
   }

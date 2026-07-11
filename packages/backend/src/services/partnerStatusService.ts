@@ -83,6 +83,7 @@ export async function getPartnerStatus(partnerUserId: string, primaryUserId: str
     colorToken: stateToToken({
       bleedingType: latest.dailyEntry.bleedingType,
       computedState: latest.computedState,
+      pibActive: latest.pibActive,
     }),
     peakRelation: latest.peakRelation,
     acknowledgedToday,

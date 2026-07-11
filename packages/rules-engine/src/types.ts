@@ -10,6 +10,8 @@ export type VariantMode = 'REGULAR' | 'LACTATION' | 'MENOPAUSE' | 'BIP';
 
 export type FertilityState = 'FERTILE' | 'INFERTILE_ALTERNATING' | 'INFERTILE_ABSOLUTE';
 
+export type LactationPhase = 'OBSERVATION' | 'ESTABLISHING_PIB' | 'PIB_ACTIVE' | 'PIB_BROKEN';
+
 export type PeakRelation =
   | 'PRE_PEAK'
   | 'CANDIDATE'
@@ -43,6 +45,10 @@ export interface DailyFertilityState {
   rawCode: string;
   computedState: FertilityState;
   peakRelation: PeakRelation;
+  /** Only meaningful for LACTATION — true exactly when computedState is INFERTILE_ALTERNATING under an established PIB. */
+  pibActive?: boolean;
+  /** Only set for LACTATION. */
+  lactationPhase?: LactationPhase;
 }
 
 export interface RawCodeResult {
