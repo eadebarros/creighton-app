@@ -8,8 +8,14 @@ vi.mock('@clerk/express', async () => {
 import request from 'supertest';
 import { createApp } from '../src/app.js';
 import { asUser } from './factories.js';
-import { resetDb } from './setup.js';
-import { TEST_CLERK_EMAIL, TEST_CLERK_USER_ID } from './mockClerk.js';
+import { prisma, resetDb } from './setup.js';
+import {
+  SAME_EMAIL_IDENTITY_A,
+  SAME_EMAIL_IDENTITY_B,
+  SAME_EMAIL_SHARED_EMAIL,
+  TEST_CLERK_EMAIL,
+  TEST_CLERK_USER_ID,
+} from './mockClerk.js';
 
 const app = createApp();
 const PARTNER_ID = 'user_partner_test';
@@ -43,6 +49,24 @@ describe('GET /me', () => {
 
     const partnerMe = await request(app).get('/me').set(asUser(PARTNER_ID));
     expect(partnerMe.body).toMatchObject({ role: 'COOP_PARTNER', partner: { email: TEST_CLERK_EMAIL } });
+  });
+});
+
+describe('JIT provisioning — same email, different Clerk identity', () => {
+  it('re-points the existing row at a new clerkUserId instead of crashing on the email unique constraint', async () => {
+    const first = await request(app).get('/me').set(asUser(SAME_EMAIL_IDENTITY_A));
+    expect(first.status).toBe(200);
+
+    // Same real person signs in again via a different Clerk identity (e.g.
+    // password vs. Google) sharing the same email — Clerk doesn't merge
+    // these automatically, so our own JIT-provisioning must.
+    const second = await request(app).get('/me').set(asUser(SAME_EMAIL_IDENTITY_B));
+    expect(second.status).toBe(200);
+    expect(second.body).toMatchObject({ role: 'PRIMARY_OBSERVER' });
+
+    const users = await prisma.user.findMany({ where: { email: SAME_EMAIL_SHARED_EMAIL } });
+    expect(users).toHaveLength(1);
+    expect(users[0].clerkUserId).toBe(SAME_EMAIL_IDENTITY_B);
   });
 });
 

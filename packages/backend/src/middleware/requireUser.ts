@@ -24,15 +24,24 @@ export async function requireUser(req: Request, res: Response, next: NextFunctio
         res.status(400).json({ error: 'Clerk user has no email address on file' });
         return;
       }
-      user = await prisma.user.create({
-        data: {
-          clerkUserId: userId,
-          email,
-          role: 'PRIMARY_OBSERVER',
-          currentVariantMode: 'REGULAR',
-          instructorCredentialAck: false,
-        },
-      });
+      // Clerk treats password and OAuth (Google/Apple) sign-in as separate
+      // identities (distinct clerkUserId) unless account linking is on for
+      // the instance — the same person switching methods with the same
+      // email would otherwise crash here on email's unique constraint.
+      // Re-point the existing row at the new identity instead of creating a
+      // duplicate.
+      const existingByEmail = await prisma.user.findUnique({ where: { email } });
+      user = existingByEmail
+        ? await prisma.user.update({ where: { id: existingByEmail.id }, data: { clerkUserId: userId } })
+        : await prisma.user.create({
+            data: {
+              clerkUserId: userId,
+              email,
+              role: 'PRIMARY_OBSERVER',
+              currentVariantMode: 'REGULAR',
+              instructorCredentialAck: false,
+            },
+          });
     }
     req.internalUser = user;
     next();
