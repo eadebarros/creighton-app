@@ -121,7 +121,7 @@ export function SettingsHubScreen({ navigation }: Props) {
 
         <Text style={styles.sectionLabel}>Conta</Text>
         <SettingsRow item={{ label: 'Alterar senha', onPress: () => navigation.navigate('ChangePassword') }} />
-        <SettingsRow item={{ label: 'Notificações', value: 'Em breve' }} />
+        <SettingsRow item={{ label: 'Notificações', onPress: () => navigation.navigate('Notifications') }} />
 
         <Text style={styles.sectionLabel}>Dados &amp; privacidade</Text>
         <SettingsRow item={{ label: 'Baixar meus dados', value: 'Em breve' }} />

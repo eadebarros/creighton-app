@@ -13,6 +13,7 @@ import { ExportPdfScreen } from '../screens/export/ExportPdfScreen';
 import { SettingsHubScreen } from '../screens/settings/SettingsHubScreen';
 import { ChangePasswordScreen } from '../screens/settings/ChangePasswordScreen';
 import { TermsScreen } from '../screens/settings/TermsScreen';
+import { NotificationsScreen } from '../screens/settings/NotificationsScreen';
 import { getDb } from '../db/client';
 import { getActiveCycle } from '../db/cycleRepository';
 import { hasEntryForDate } from '../db/entryRepository';
@@ -55,6 +56,7 @@ export function RootNavigator() {
           <Stack.Screen name="Settings" component={SettingsHubScreen} />
           <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
           <Stack.Screen name="Terms" component={TermsScreen} />
+          <Stack.Screen name="Notifications" component={NotificationsScreen} />
         </Stack.Navigator>
       </CaptureFlowProvider>
     </NavigationContainer>

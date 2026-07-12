@@ -13,6 +13,7 @@ import { today } from '../../domain/dateMath';
 import type { CaptureAnswers } from '../../domain/mapping';
 import { getApiBaseUrl } from '../../api/config';
 import { getCachedVariantMode } from '../../settings/variantModeCache';
+import { rescheduleReminders } from '../../settings/notificationScheduler';
 import { syncNow } from '../../sync/syncClient';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Intercourse'>;
@@ -46,6 +47,8 @@ export function IntercourseScreen({ navigation }: Props) {
     // just written stays queued and gets picked up by the background sync
     // (useSyncLifecycle) if this fails or the device is offline.
     syncNow(db, getToken, getApiBaseUrl()).catch(() => {});
+    // Today is recorded now — suppress today's reminder (SPEC 03 §3.3.2).
+    rescheduleReminders().catch(() => {});
     reset();
     navigation.navigate('Confirmation', { observationCount });
   }

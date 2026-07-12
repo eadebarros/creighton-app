@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Notifications from 'expo-notifications';
 import { useFonts } from 'expo-font';
 import { ClerkProvider, ClerkLoaded, useAuth } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
@@ -18,6 +19,17 @@ if (!CLERK_PUBLISHABLE_KEY) {
 }
 
 SplashScreen.preventAutoHideAsync();
+
+// Daily registro reminder (SPEC 03 §3.3) — shows the banner/sound even if the
+// notification fires while the app happens to be in the foreground.
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 /** Must render inside <ClerkProvider> — useAuth() needs that context. */
 function AuthGate() {
