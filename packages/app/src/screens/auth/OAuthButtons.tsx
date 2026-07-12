@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSSO } from '@clerk/expo';
+import { useSSO, isClerkAPIResponseError } from '@clerk/expo';
 import { colors, fonts, radii, spacing } from '../../theme';
 
 interface Props {
@@ -27,8 +27,16 @@ export function OAuthButtons({ onError }: Props) {
         await setActive({ session: createdSessionId });
       }
       // else: the user cancelled the browser flow — nothing to do.
-    } catch {
-      onError('Não foi possível entrar. Tente de novo.');
+    } catch (err) {
+      // Logged (not just surfaced as generic UI text) — Clerk's rejection
+      // reason (bad redirect URI, misconfigured connection, etc.) only shows
+      // up here, never in the user-facing message below.
+      console.warn('[OAuthButtons] SSO error', err);
+      if (isClerkAPIResponseError(err)) {
+        onError(err.errors[0]?.longMessage ?? err.errors[0]?.message ?? 'Não foi possível entrar. Tente de novo.');
+      } else {
+        onError('Não foi possível entrar. Tente de novo.');
+      }
     } finally {
       setLoading(null);
     }
