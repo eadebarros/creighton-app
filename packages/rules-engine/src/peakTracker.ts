@@ -17,7 +17,8 @@ export interface PeakTrackerResult {
   lastCandidateDate: string | null;
 }
 
-function isPeakTypeDay(entry: DailyEntryInput): boolean {
+/** Exported for confirmPeakOnCycleClose.ts's own candidate-discovery walk (Adendo 02) — behavior unchanged. */
+export function isPeakTypeDay(entry: DailyEntryInput): boolean {
   const { tier } = deriveRawCode(
     entry.mucusSensation,
     entry.mucusStretch,

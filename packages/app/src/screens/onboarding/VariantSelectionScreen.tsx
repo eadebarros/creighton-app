@@ -12,15 +12,8 @@ interface Props {
 const VARIANTS: { key: VariantMode; title: string; description: string; implemented: boolean }[] = [
   { key: 'REGULAR', title: 'Regular', description: 'Ciclos com padrão de fertilidade típico.', implemented: true },
   { key: 'LACTATION', title: 'Lactação', description: 'Pós-parto, amamentação em curso.', implemented: true },
-  { key: 'MENOPAUSE', title: 'Pré-menopausa', description: 'Ciclos irregulares por transição hormonal.', implemented: false },
+  { key: 'MENOPAUSE', title: 'Pré-menopausa', description: 'Ciclos irregulares por transição hormonal.', implemented: true },
 ];
-
-/**
- * Pré-menopausa is shown so the roadmap is visible, but disabled — its true
- * Ápice confirmation isn't implemented yet (@creighton/rules-engine still
- * throws VariantNotImplementedError for MENOPAUSE), so no one is silently
- * tracked under REGULAR interpretation while believing that variant is active.
- */
 export function VariantSelectionScreen({ onContinue }: Props) {
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<VariantMode>('REGULAR');

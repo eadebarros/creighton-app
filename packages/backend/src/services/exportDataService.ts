@@ -69,6 +69,7 @@ async function buildExportCycle(
     isActive: cycle.isActive,
     variantMode: cycle.variantModeSnapshot,
     confirmedPeakDay: cycle.confirmedPeakDay ? toIsoDate(cycle.confirmedPeakDay) : null,
+    peakResolution: cycle.peakResolution,
     days,
   };
 }

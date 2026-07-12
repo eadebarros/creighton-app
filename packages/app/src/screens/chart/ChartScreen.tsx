@@ -8,7 +8,7 @@ import { StampBadge } from '../../components/StampBadge';
 import { stateToToken } from '@creighton/rules-engine';
 import { colors, fonts, radii, spacing } from '../../theme';
 import { getDb } from '../../db/client';
-import { getActiveCycle } from '../../db/cycleRepository';
+import { getActiveCycle, getCycleVariantMode } from '../../db/cycleRepository';
 import { getFertilityStatesForCycle, hasEntryForDate } from '../../db/entryRepository';
 import { today } from '../../domain/dateMath';
 import { groupByContiguousPhase, peakRelationLabel } from './chartGrouping';
@@ -30,6 +30,7 @@ export function ChartScreen({ navigation }: Props) {
   const [groups, setGroups] = useState<PhaseGroup[] | null>(null);
   const [dayNumberByDate, setDayNumberByDate] = useState<Map<string, number>>(new Map());
   const [inObservationPhase, setInObservationPhase] = useState(false);
+  const [inMonitoringPhase, setInMonitoringPhase] = useState(false);
   const [cycleId, setCycleId] = useState<string | null>(null);
   const [sheetDate, setSheetDate] = useState<string | null>(null);
   const [hasRegisteredToday, setHasRegisteredToday] = useState(false);
@@ -45,6 +46,7 @@ export function ChartScreen({ navigation }: Props) {
     }
     setCycleId(activeCycle.id);
     setHasRegisteredToday(await hasEntryForDate(db, activeCycle.id, today()));
+    const variantMode = await getCycleVariantMode(db, activeCycle.id);
     const results = await getFertilityStatesForCycle(db, activeCycle.id);
     const days: ChartDay[] = results.map(({ row, state }) => ({
       date: row.date,
@@ -59,6 +61,11 @@ export function ChartScreen({ navigation }: Props) {
     setDayNumberByDate(new Map(days.map((day, i) => [day.date, i + 1])));
     setGroups(groupByContiguousPhase(days));
     setInObservationPhase(days[days.length - 1]?.lactationPhase === 'OBSERVATION');
+    // Adendo 02 — Pré-menopausa: a pending candidate awaiting cross-cycle
+    // confirmation, only ever resolved when the cycle actually closes.
+    // Other variants also use the CANDIDATE label transiently, so this only
+    // applies to MENOPAUSE.
+    setInMonitoringPhase(variantMode === 'MENOPAUSE' && days[days.length - 1]?.peakRelation === 'CANDIDATE');
   }
 
   useEffect(() => {
@@ -100,6 +107,14 @@ export function ChartScreen({ navigation }: Props) {
         )}
         {inObservationPhase && (
           <Text style={styles.observationBanner}>Fase de observação: abstinência recomendada.</Text>
+        )}
+        {inMonitoringPhase && (
+          <View style={styles.monitoringBanner}>
+            <Text style={styles.monitoringBannerTitle}>Ciclo longo sob monitoramento</Text>
+            <Text style={styles.monitoringBannerBody}>
+              Aguardando confirmação do Ápice. Comum neste modo — acompanhamento contínuo, sem prazo fixo.
+            </Text>
+          </View>
         )}
         {groups?.map((group) => (
           <View key={`${group.label}-${group.days[0]?.date}`} style={styles.group}>
@@ -203,6 +218,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.lg,
     marginHorizontal: spacing.xl,
+  },
+  monitoringBanner: {
+    alignItems: 'center',
+    marginTop: spacing.lg,
+    marginHorizontal: spacing.xl,
+    gap: spacing.xs,
+  },
+  monitoringBannerTitle: {
+    fontFamily: fonts.display.medium,
+    fontSize: 15,
+    color: colors.ink,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radii.sm,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+  },
+  monitoringBannerBody: {
+    fontFamily: fonts.body.regular,
+    fontSize: 12,
+    color: colors.inkMuted,
+    textAlign: 'center',
+    maxWidth: 260,
   },
   group: {
     marginTop: spacing.lg,

@@ -27,6 +27,8 @@ export interface ExportCycle {
   isActive: boolean;
   variantMode: VariantMode;
   confirmedPeakDay: string | null;
+  /** Adendo 02 — authoritative resolution, replaces the old isActive/confirmedPeakDay proxy. */
+  peakResolution: 'PENDING' | 'CONFIRMED' | 'UNCONFIRMED_CLOSED';
   days: ExportDay[];
 }
 
@@ -103,7 +105,7 @@ function renderCyclePage(doc: PDFKit.PDFDocument, cycle: ExportCycle): void {
     .fillColor(INK_MUTED)
     .text(`${period}  ·  Variante: ${VARIANT_LABEL[cycle.variantMode]}`, PAGE_MARGIN, PAGE_MARGIN + 20);
 
-  if (cycle.isActive === false && cycle.confirmedPeakDay === null) {
+  if (cycle.peakResolution === 'UNCONFIRMED_CLOSED') {
     doc.fillColor(INK).font('Helvetica-Bold').text('Ápice não confirmado neste ciclo', PAGE_MARGIN, PAGE_MARGIN + 36);
   }
 

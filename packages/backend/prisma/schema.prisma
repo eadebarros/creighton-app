@@ -80,6 +80,17 @@ enum PeakRelation {
   NOT_APPLICABLE
 }
 
+/// Adendo 02 — resolução do Ápice ao fechar o ciclo. PENDING: ciclo aberto,
+/// ou fechado mas ainda não processado. CONFIRMED: Ápice confirmado (fluxo
+/// normal em Regular/Lactação; janela cross-ciclo em Pré-menopausa).
+/// UNCONFIRMED_CLOSED: ciclo fechou sem Ápice confirmável — estado
+/// clinicamente válido em Pré-menopausa, nunca erro.
+enum PeakResolution {
+  PENDING
+  CONFIRMED
+  UNCONFIRMED_CLOSED
+}
+
 model User {
   id                      String      @id @default(uuid()) @db.Uuid
   clerkUserId             String      @unique @map("clerk_user_id")
@@ -110,6 +121,8 @@ model Cycle {
   variantModeSnapshot VariantMode  @map("variant_mode_snapshot")
   confirmedPeakDay    DateTime?    @map("confirmed_peak_day") @db.Date
   peakDayConfirmedAt  DateTime?    @map("peak_day_confirmed_at")
+  peakResolution      PeakResolution @default(PENDING) @map("peak_resolution")
+  peakCandidateDate   DateTime?    @map("peak_candidate_date") @db.Date
   entries             DailyEntry[]
   observations        Observation[]
 

@@ -4,6 +4,7 @@ import type { ActiveCycleSummary, LastEntrySummary } from '@creighton/rules-engi
 import { toIsoDate } from '../domain/mapping.js';
 import type { EntryPayload } from '../validation/entries.js';
 import { consolidateDay } from './dailyConsolidationService.js';
+import { maybeReprocessClosedCyclePeak, resolvePeakOnCycleClose } from './cyclePeakClosureService.js';
 import { recomputeCycleFertilityStates } from './recomputeCycle.js';
 
 export interface EntryResult {
@@ -107,6 +108,10 @@ export async function processObservationBatch(
             where: { id: action.closePreviousCycle.id },
             data: { isActive: false, endDate: new Date(`${action.closePreviousCycle.endDate}T00:00:00Z`) },
           });
+          // Adendo 02 — the real bleeding that just closed this cycle is
+          // exactly the event `confirmPeakOnCycleClose` needs (cross-cycle
+          // Ápice validation for MENOPAUSE; passthrough for everything else).
+          await resolvePeakOnCycleClose(tx, action.closePreviousCycle.id, action.startDate);
         }
         const created = await tx.cycle.create({
           data: {
@@ -169,6 +174,9 @@ export async function processObservationBatch(
   }
   for (const cycleId of touchedCycleIds) {
     await recomputeCycleFertilityStates(tx, cycleId);
+    // Adendo 02, Seção 2.4 — a backdated/retried batch could touch a cycle
+    // that's already closed and resolved; re-decide its peak resolution.
+    await maybeReprocessClosedCyclePeak(tx, cycleId);
   }
 
   // Return results in the caller's original (possibly unsorted) order.

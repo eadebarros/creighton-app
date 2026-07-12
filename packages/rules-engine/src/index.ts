@@ -21,6 +21,17 @@ export function computeFertilityStates(
   if (variantMode === 'LACTATION') {
     return assignLactationStates(entries);
   }
+  if (variantMode === 'MENOPAUSE') {
+    // Adendo 02 — a candidate's 3-day confirmation is only ever provisional
+    // here (needs the cross-cycle bleeding-window check, which only
+    // `confirmPeakOnCycleClose` can do at cycle-close time). `confirmed` is
+    // forced null so no INFERTILE_ABSOLUTE cascade ever appears while
+    // pending — the couple stays FERTILE the whole cycle by design.
+    // `lastCandidateDate` still flows through, so CANDIDATE/PRE_PEAK labels
+    // (used by the "Ciclo longo sob monitoramento" UI) work as before.
+    const { lastCandidateDate } = findConfirmedPeak(entries);
+    return assignStates(entries, { confirmed: null, lastCandidateDate });
+  }
   if (variantMode !== 'REGULAR') {
     throw new VariantNotImplementedError(variantMode);
   }
@@ -29,11 +40,13 @@ export function computeFertilityStates(
 }
 
 export { deriveRawCode } from './vdrsLookup.js';
-export { findConfirmedPeak } from './peakTracker.js';
+export { findConfirmedPeak, isPeakTypeDay } from './peakTracker.js';
 export { assignStates } from './fertilityState.js';
 export { assignLactationStates } from './variantLactation.js';
 export { pickDailyPeak } from './pickDailyPeak.js';
 export type { Observation, DailyConsolidation } from './pickDailyPeak.js';
+export { confirmPeakOnCycleClose, findAllConfirmedTcs } from './confirmPeakOnCycleClose.js';
+export type { PeakTrackerState, PeakClosureResult, ConfirmPeakOnCloseInput } from './confirmPeakOnCycleClose.js';
 export * from './types.js';
 export * from './cycleBoundary.js';
 export * from './colorToken.js';

@@ -1,39 +1,23 @@
 import type { Prisma } from '@prisma/client';
 import { computeFertilityStates, findConfirmedPeak, RULES_ENGINE_VERSION } from '@creighton/rules-engine';
+import type { DailyFertilityState } from '@creighton/rules-engine';
 import { entryToInput, toIsoDate } from '../domain/mapping.js';
 
 /**
- * Recomputes every day's fertility state for a cycle from scratch (cheap —
- * `assignStates`/`findConfirmedPeak` already do a full pass per call) and
- * persists the result as versioned DAILY_FERTILITY_STATE rows: a new row is
- * only inserted when a day's (computedState, peakRelation) actually changed
- * vs. its current version — writing on every no-op call would defeat the
- * point of this table (an audit log of what changed, and when), per the
- * architecture doc's own reasoning (Seção 2).
- *
- * Must run inside a transaction: takes a Postgres advisory lock keyed on the
- * cycle id first, serializing any accidental concurrent recompute for the
- * same cycle (e.g. an HTTP retry racing an in-flight sync). Auto-released on
- * commit/rollback.
+ * Diffs rules-engine output against the current (non-superseded)
+ * DailyFertilityState per entry, and persists only what actually changed —
+ * versioned via `supersededById`, never overwritten in place. Shared by the
+ * normal per-cycle recompute below and Adendo 02's cycle-close retroactive
+ * cascade (`cyclePeakClosureService.ts`), which needs the exact same
+ * diff-and-version behavior with a different `computed` input.
  */
-export async function recomputeCycleFertilityStates(tx: Prisma.TransactionClient, cycleId: string): Promise<void> {
-  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${cycleId}, 0))`;
-
-  const cycle = await tx.cycle.findUniqueOrThrow({ where: { id: cycleId } });
-  const entries = await tx.dailyEntry.findMany({ where: { cycleId }, orderBy: { date: 'asc' } });
-  const inputs = entries.map(entryToInput);
-
-  const computed = computeFertilityStates(inputs, cycle.variantModeSnapshot);
-
-  // Zip rules-engine output back to entry rows by date — never by array
-  // index. Both `entries` and `computed` happen to be date-ascending here,
-  // but `UNIQUE(cycle_id, date)` already makes date the natural join key, so
-  // there's no reason to depend on incidental ordering staying in sync.
+export async function persistComputedStates(
+  tx: Prisma.TransactionClient,
+  entries: { id: string; date: Date }[],
+  computed: DailyFertilityState[],
+): Promise<void> {
   const entryIdByDate = new Map(entries.map((entry) => [toIsoDate(entry.date), entry.id]));
 
-  // One query for every entry's current version, instead of one query per
-  // day in the loop below — Railway's public proxy adds real per-round-trip
-  // latency, and a cycle can be a few dozen days long.
   const currentStates = await tx.dailyFertilityState.findMany({
     where: { dailyEntryId: { in: [...entryIdByDate.values()] }, supersededById: null },
   });
@@ -46,7 +30,6 @@ export async function recomputeCycleFertilityStates(tx: Prisma.TransactionClient
     }
 
     const current = currentByEntryId.get(entryId) ?? null;
-
     const pibActive = result.pibActive ?? false;
 
     if (!current) {
@@ -84,11 +67,33 @@ export async function recomputeCycleFertilityStates(tx: Prisma.TransactionClient
       data: { supersededById: next.id },
     });
   }
+}
+
+/**
+ * Recomputes every day's fertility state for a cycle from scratch (cheap —
+ * `computeFertilityStates` already does a full pass per call) and persists
+ * the result as versioned DAILY_FERTILITY_STATE rows via `persistComputedStates`.
+ *
+ * Must run inside a transaction: takes a Postgres advisory lock keyed on the
+ * cycle id first, serializing any accidental concurrent recompute for the
+ * same cycle (e.g. an HTTP retry racing an in-flight sync). Auto-released on
+ * commit/rollback.
+ */
+export async function recomputeCycleFertilityStates(tx: Prisma.TransactionClient, cycleId: string): Promise<void> {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${cycleId}, 0))`;
+
+  const cycle = await tx.cycle.findUniqueOrThrow({ where: { id: cycleId } });
+  const entries = await tx.dailyEntry.findMany({ where: { cycleId }, orderBy: { date: 'asc' } });
+  const inputs = entries.map(entryToInput);
+
+  const computed = computeFertilityStates(inputs, cycle.variantModeSnapshot);
+  await persistComputedStates(tx, entries, computed);
 
   // Peak/Ápice tracking only applies to REGULAR (Seção 3.5 — Lactação has no
-  // Tc/Ápice concept, only the PIB mechanism above). Peak confirmation is
-  // set-once — findConfirmedPeak's state machine never un-confirms a peak
-  // once found, so this never needs to un-set confirmedPeakDay.
+  // Tc/Ápice concept, only the PIB mechanism; MENOPAUSE's confirmation is
+  // always provisional here, resolved only at cycle-close — Adendo 02).
+  // Peak confirmation is set-once — findConfirmedPeak's state machine never
+  // un-confirms a peak once found, so this never needs to un-set confirmedPeakDay.
   if (cycle.variantModeSnapshot === 'REGULAR') {
     const peakResult = findConfirmedPeak(inputs);
     if (peakResult.confirmed !== null && cycle.confirmedPeakDay === null) {
