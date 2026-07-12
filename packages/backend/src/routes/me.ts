@@ -6,13 +6,28 @@ import type { User } from '@prisma/client';
 
 export const meRouter = Router();
 
+/** The invite that created the current link, whichever side created it — used only to show "linked since" in Configurações. */
+async function findLinkedAt(userId: string, partnerId: string): Promise<Date | null> {
+  const invite = await prisma.partnerInvite.findFirst({
+    where: {
+      OR: [
+        { createdById: userId, usedById: partnerId },
+        { createdById: partnerId, usedById: userId },
+      ],
+    },
+    orderBy: { usedAt: 'desc' },
+  });
+  return invite?.usedAt ?? null;
+}
+
 async function serializeMe(user: User) {
   const partner = user.partnerId
     ? await prisma.user.findUnique({ where: { id: user.partnerId }, select: { email: true } })
     : null;
+  const linkedAt = user.partnerId ? await findLinkedAt(user.id, user.partnerId) : null;
   return {
     role: user.role,
-    partner: partner ? { email: partner.email } : null,
+    partner: partner ? { email: partner.email, linkedAt: linkedAt?.toISOString() ?? null } : null,
     instructorCredentialAck: user.instructorCredentialAck,
     instructorCredentialAckAt: user.instructorCredentialAckAt?.toISOString() ?? null,
     currentVariantMode: user.currentVariantMode,

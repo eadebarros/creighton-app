@@ -97,3 +97,28 @@ export async function redeemInvite(code: string, redeemerId: string): Promise<Re
     return { partnerEmail: inviter.email };
   });
 }
+
+/**
+ * Symmetric — either side of the link can call this. Whichever side was
+ * COOP_PARTNER reverts to PRIMARY_OBSERVER (the default for any account with
+ * no partner), so nobody is left in a stuck COOP_PARTNER-with-no-partner
+ * state. The PRIMARY_OBSERVER side's own clinical data is never touched.
+ */
+export async function unlinkPartner(userId: string): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
+    if (!user.partnerId) {
+      throw new BadRequestError('Not linked to a partner');
+    }
+    const partner = await tx.user.findUniqueOrThrow({ where: { id: user.partnerId } });
+
+    await tx.user.update({
+      where: { id: user.id },
+      data: { partnerId: null, ...(user.role === 'COOP_PARTNER' ? { role: 'PRIMARY_OBSERVER' } : {}) },
+    });
+    await tx.user.update({
+      where: { id: partner.id },
+      data: { partnerId: null, ...(partner.role === 'COOP_PARTNER' ? { role: 'PRIMARY_OBSERVER' } : {}) },
+    });
+  });
+}

@@ -133,7 +133,7 @@ export function SettingsHubScreen({ navigation }: Props) {
           item={{
             label: 'Parceiro',
             value: me?.partner ? me.partner.email : undefined,
-            onPress: () => navigation.navigate('InvitePartner'),
+            onPress: () => navigation.navigate('PartnerSettings'),
           }}
         />
         <SettingsRow item={{ label: 'Privacidade do parceiro', value: 'Em breve' }} />

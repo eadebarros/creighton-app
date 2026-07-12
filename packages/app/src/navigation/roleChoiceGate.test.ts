@@ -22,10 +22,10 @@ describe('shouldShowRoleChoice', () => {
   });
 
   it('never shows once a partner is linked', () => {
-    expect(shouldShowRoleChoice(me({ partner: { email: 'a@b.com' } }), 0)).toBe(false);
+    expect(shouldShowRoleChoice(me({ partner: { email: 'a@b.com', linkedAt: null } }), 0)).toBe(false);
   });
 
   it('never shows for a COOP_PARTNER', () => {
-    expect(shouldShowRoleChoice(me({ role: 'COOP_PARTNER', partner: { email: 'a@b.com' } }), 0)).toBe(false);
+    expect(shouldShowRoleChoice(me({ role: 'COOP_PARTNER', partner: { email: 'a@b.com', linkedAt: null } }), 0)).toBe(false);
   });
 });

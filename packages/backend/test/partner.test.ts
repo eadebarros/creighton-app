@@ -9,7 +9,7 @@ vi.mock('@clerk/express', async () => {
 import request from 'supertest';
 import { createApp } from '../src/app.js';
 import { asUser, buildEntry } from './factories.js';
-import { resetDb } from './setup.js';
+import { prisma, resetDb } from './setup.js';
 import { TEST_CLERK_USER_ID } from './mockClerk.js';
 
 const app = createApp();
@@ -119,5 +119,49 @@ describe('GET /partner/acknowledgments', () => {
     const after = await request(app).get('/partner/acknowledgments').set(asUser(PARTNER_ID));
     expect(after.body.acknowledgments).toHaveLength(1);
     expect(after.body.acknowledgments[0]).toMatchObject({ date: new Date().toISOString().slice(0, 10) });
+  });
+});
+
+describe('POST /partner/unlink', () => {
+  it('rejects a caller with no partner', async () => {
+    const res = await request(app).post('/partner/unlink').set(asUser(TEST_CLERK_USER_ID));
+    expect(res.status).toBe(400);
+  });
+
+  it('clears partnerId symmetrically and reverts the COOP_PARTNER role, initiated by the PRIMARY_OBSERVER', async () => {
+    await linkPartner();
+
+    const res = await request(app).post('/partner/unlink').set(asUser(TEST_CLERK_USER_ID));
+    expect(res.status).toBe(204);
+
+    const inviter = await prisma.user.findUniqueOrThrow({ where: { clerkUserId: TEST_CLERK_USER_ID } });
+    const redeemer = await prisma.user.findUniqueOrThrow({ where: { clerkUserId: PARTNER_ID } });
+    expect(inviter.partnerId).toBeNull();
+    expect(inviter.role).toBe('PRIMARY_OBSERVER');
+    expect(redeemer.partnerId).toBeNull();
+    expect(redeemer.role).toBe('PRIMARY_OBSERVER');
+  });
+
+  it('also works initiated by the COOP_PARTNER side', async () => {
+    await linkPartner();
+
+    const res = await request(app).post('/partner/unlink').set(asUser(PARTNER_ID));
+    expect(res.status).toBe(204);
+
+    const redeemer = await prisma.user.findUniqueOrThrow({ where: { clerkUserId: PARTNER_ID } });
+    expect(redeemer.partnerId).toBeNull();
+    expect(redeemer.role).toBe('PRIMARY_OBSERVER');
+  });
+});
+
+describe('GET /me — partner.linkedAt', () => {
+  it('reflects the invite redemption timestamp once linked, and disappears after unlinking', async () => {
+    await linkPartner();
+    const linked = await request(app).get('/me').set(asUser(TEST_CLERK_USER_ID));
+    expect(linked.body.partner.linkedAt).not.toBeNull();
+
+    await request(app).post('/partner/unlink').set(asUser(TEST_CLERK_USER_ID));
+    const unlinked = await request(app).get('/me').set(asUser(TEST_CLERK_USER_ID));
+    expect(unlinked.body.partner).toBeNull();
   });
 });

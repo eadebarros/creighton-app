@@ -90,7 +90,7 @@ export async function getSync(baseUrl: string, token: string, since: string): Pr
 
 export interface MeResponse {
   role: 'PRIMARY_OBSERVER' | 'COOP_PARTNER';
-  partner: { email: string } | null;
+  partner: { email: string; linkedAt: string | null } | null;
   instructorCredentialAck: boolean;
   instructorCredentialAckAt: string | null;
   currentVariantMode: VariantMode;
@@ -162,6 +162,16 @@ export interface PartnerStatus {
   colorToken: FertilityColorToken | null;
   peakRelation: PeakRelation | null;
   acknowledgedToday: boolean;
+}
+
+export async function unlinkPartner(baseUrl: string, token: string): Promise<void> {
+  const res = await fetch(`${baseUrl}/partner/unlink`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new Error(`POST /partner/unlink failed: ${res.status}`);
+  }
 }
 
 export async function getPartnerStatus(baseUrl: string, token: string): Promise<PartnerStatus> {

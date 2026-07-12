@@ -8,9 +8,9 @@ import { MucusStretchScreen } from '../screens/capture/MucusStretchScreen';
 import { IntercourseScreen } from '../screens/capture/IntercourseScreen';
 import { ConfirmationScreen } from '../screens/capture/ConfirmationScreen';
 import { ChartScreen } from '../screens/chart/ChartScreen';
-import { InvitePartnerScreen } from '../screens/partner/InvitePartnerScreen';
 import { ExportPdfScreen } from '../screens/export/ExportPdfScreen';
 import { SettingsHubScreen } from '../screens/settings/SettingsHubScreen';
+import { PartnerSettingsScreen } from '../screens/settings/PartnerSettingsScreen';
 import { ChangePasswordScreen } from '../screens/settings/ChangePasswordScreen';
 import { TermsScreen } from '../screens/settings/TermsScreen';
 import { NotificationsScreen } from '../screens/settings/NotificationsScreen';
@@ -51,9 +51,9 @@ export function RootNavigator() {
           <Stack.Screen name="Intercourse" component={IntercourseScreen} />
           <Stack.Screen name="Confirmation" component={ConfirmationScreen} />
           <Stack.Screen name="Chart" component={ChartScreen} />
-          <Stack.Screen name="InvitePartner" component={InvitePartnerScreen} />
           <Stack.Screen name="ExportPdf" component={ExportPdfScreen} />
           <Stack.Screen name="Settings" component={SettingsHubScreen} />
+          <Stack.Screen name="PartnerSettings" component={PartnerSettingsScreen} />
           <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
           <Stack.Screen name="Terms" component={TermsScreen} />
           <Stack.Screen name="Notifications" component={NotificationsScreen} />

@@ -6,9 +6,9 @@ export type RootStackParamList = {
   Intercourse: undefined;
   Confirmation: { observationCount: number };
   Chart: undefined;
-  InvitePartner: undefined;
   ExportPdf: undefined;
   Settings: undefined;
+  PartnerSettings: undefined;
   ChangePassword: undefined;
   Terms: undefined;
   Notifications: undefined;
