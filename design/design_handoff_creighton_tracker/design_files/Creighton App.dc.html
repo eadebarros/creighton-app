@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #EFEBE2; }
+    * { box-sizing: border-box; }
+  </style>
+</helmet>
+<div style="font-family:'Inter',sans-serif;min-height:100vh;background:#EFEBE2;padding:40px 24px 80px;display:flex;flex-direction:column;align-items:center;">
+
+  <div style="display:flex;gap:8px;margin-bottom:32px;background:#FFFFFF;border:1px solid #D8D3C7;border-radius:999px;padding:5px;">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+      <div onClick="{{ t.onClick }}" style="{{ t.style }}">{{ t.label }}</div>
+    </sc-for>
+  </div>
+
+  <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 402 }}" height="{{ 874 }}" hint-size="402,874">
+    <div style="width:100%;height:100%;background:#F7F4EE;color:#2B2A28;overflow:hidden;position:relative;">
+
+      <!-- ===== CAPTURE FLOW ===== -->
+      <sc-if value="{{ isCapture }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:66px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;">
+          <div style="display:flex;justify-content:center;gap:7px;margin-bottom:36px;">
+            <sc-for list="{{ dots }}" as="d" hint-placeholder-count="4">
+              <div style="{{ d.style }}"></div>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ showBack }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ goBack }}" style="font-size:14px;color:#3B4C63;font-weight:500;margin-bottom:18px;cursor:pointer;width:fit-content;">&larr; Voltar</div>
+          </sc-if>
+
+          <div style="font-family:'Fraunces',serif;font-size:15px;font-weight:600;color:#6B6862;margin-bottom:6px;">Dia {{ cycleDay }} do ciclo</div>
+
+          <!-- BLEEDING -->
+          <sc-if value="{{ stepIsBleeding }}" hint-placeholder-val="{{ false }}">
+            <div style="font-family:'Fraunces',serif;font-size:26px;font-weight:500;margin-bottom:28px;line-height:1.25;">Teve sangramento hoje?</div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <sc-for list="{{ bleedingOptions }}" as="o" hint-placeholder-count="5">
+                <div onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.label }}</div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <!-- SENSATION -->
+          <sc-if value="{{ stepIsSensation }}" hint-placeholder-val="{{ false }}">
+            <div style="font-family:'Fraunces',serif;font-size:26px;font-weight:500;margin-bottom:28px;line-height:1.25;">Como estava a sensação hoje?</div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <sc-for list="{{ sensationOptions }}" as="o" hint-placeholder-count="4">
+                <div onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.label }}</div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <!-- MUCUS COLOR -->
+          <sc-if value="{{ stepIsMucusColor }}" hint-placeholder-val="{{ false }}">
+            <div style="font-family:'Fraunces',serif;font-size:26px;font-weight:500;margin-bottom:28px;line-height:1.25;">Cor observada</div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <sc-for list="{{ mucusColorOptions }}" as="o" hint-placeholder-count="5">
+                <div onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.label }}</div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <!-- MUCUS STRETCH -->
+          <sc-if value="{{ stepIsMucusStretch }}" hint-placeholder-val="{{ false }}">
+            <div style="font-family:'Fraunces',serif;font-size:26px;font-weight:500;margin-bottom:28px;line-height:1.25;">Esticava?</div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <sc-for list="{{ mucusStretchOptions }}" as="o" hint-placeholder-count="3">
+                <div onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.label }}</div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <!-- INTERCOURSE -->
+          <sc-if value="{{ stepIsIntercourse }}" hint-placeholder-val="{{ false }}">
+            <div style="font-family:'Fraunces',serif;font-size:26px;font-weight:500;margin-bottom:28px;line-height:1.25;">Houve relação sexual hoje?</div>
+            <div style="display:flex;gap:12px;">
+              <sc-for list="{{ intercourseOptions }}" as="o" hint-placeholder-count="2">
+                <div onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.label }}</div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <!-- DONE -->
+          <sc-if value="{{ stepIsDone }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;">
+              <svg width="52" height="52" viewBox="0 0 52 52">
+                <circle cx="26" cy="26" r="25" fill="none" stroke="#16A34A" stroke-width="2"></circle>
+                <path d="M15 27 L22 34 L37 18" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+              <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:500;">Registrado</div>
+              <div style="font-size:14px;color:#6B6862;max-width:220px;line-height:1.5;">O dado de hoje foi salvo. O status é calculado automaticamente.</div>
+              <div onClick="{{ backToWoman }}" style="margin-top:14px;background:#3B4C63;color:#FFFFFF;font-size:15px;font-weight:600;padding:14px 28px;border-radius:6px;cursor:pointer;">Voltar ao início</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ===== CHART ===== -->
+      <sc-if value="{{ isChart }}" hint-placeholder-val="{{ false }}">
+        <div style="height:100%;display:flex;flex-direction:column;box-sizing:border-box;padding-top:66px;">
+          <div style="padding:0 24px 16px;flex-shrink:0;">
+            <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:500;">Gráfico do ciclo</div>
+            <div style="font-size:13px;color:#6B6862;margin-top:2px;">Ciclo iniciado em 01/07 &middot; arraste cada linha para o lado</div>
+          </div>
+
+          <div style="flex:1;overflow-y:auto;padding:8px 0 16px;display:flex;flex-direction:column;justify-content:flex-start;gap:18px;">
+            <sc-for list="{{ chartPhaseGroups }}" as="phase" hint-placeholder-count="5">
+              <div>
+                <div style="font-family:'Inter',sans-serif;font-size:12px;font-weight:600;color:#6B6862;letter-spacing:0.05em;text-transform:uppercase;padding:0 24px;margin-bottom:10px;">{{ phase.label }}</div>
+                <div style="overflow-x:auto;padding:0 24px;">
+                  <div style="display:flex;align-items:flex-end;gap:16px;position:relative;min-width:max-content;padding-top:14px;padding-bottom:4px;">
+                    <sc-for list="{{ phase.days }}" as="day" hint-placeholder-count="5">
+                      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+                        <dc-import name="StampBadge" color="{{ day.color }}" raw-code="{{ day.rawCode }}" intercourse="{{ day.intercourse }}" peak-label="{{ day.peakLabel }}" day-seed="{{ day.seed }}" size="{{ stampSize }}" hint-size="70,90"></dc-import>
+                        <div style="font-family:'Fraunces',serif;font-size:14px;font-weight:500;margin-top:8px;">{{ day.day }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ showChartLegend }}" hint-placeholder-val="{{ true }}">
+            <div style="flex-shrink:0;border-top:1px solid #D8D3C7;padding:14px 24px 20px;display:flex;gap:22px;justify-content:center;">
+              <sc-for list="{{ legendItems }}" as="li" hint-placeholder-count="4">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+                  <dc-import name="StampBadge" color="{{ li.color }}" raw-code="—" day-seed="{{ li.color }}" size="34" hint-size="44,50"></dc-import>
+                  <div style="font-size:10px;color:#6B6862;text-align:center;max-width:64px;line-height:1.3;">{{ li.label }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ===== WOMAN DASHBOARD ===== -->
+      <sc-if value="{{ isWoman }}" hint-placeholder-val="{{ false }}">
+        <div style="height:100%;display:flex;flex-direction:column;padding:66px 24px 28px;box-sizing:border-box;">
+          <div style="font-family:'Fraunces',serif;font-size:14px;font-weight:600;color:#6B6862;letter-spacing:0.04em;">HOJE &middot; DIA {{ cycleDay }}</div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:32px;">
+            <sc-if value="{{ todayRegistered }}" hint-placeholder-val="{{ false }}">
+              <dc-import name="StampBadge" color="{{ todayColor }}" raw-code="{{ todayCode }}" day-seed="today" size="96" hint-size="120,140"></dc-import>
+              <div style="font-size:14px;color:#6B6862;">Selo de hoje registrado</div>
+              <div onClick="{{ goChart }}" style="font-size:14px;font-weight:600;color:#3B4C63;cursor:pointer;margin-top:6px;">Ver gráfico completo &rarr;</div>
+            </sc-if>
+            <sc-if value="{{ notRegistered }}" hint-placeholder-val="{{ true }}">
+              <div style="width:96px;height:96px;border-radius:4px;border:1.5px dashed #D8D3C7;display:flex;align-items:center;justify-content:center;">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6B6862;">?</div>
+              </div>
+              <div style="font-size:14px;color:#6B6862;text-align:center;max-width:200px;">Você ainda não registrou o dado de hoje.</div>
+              <div onClick="{{ startCapture }}" style="margin-top:8px;background:#3B4C63;color:#FFFFFF;font-size:15px;font-weight:600;padding:16px 32px;border-radius:6px;cursor:pointer;min-height:48px;display:flex;align-items:center;">Registrar hoje</div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===== MAN DASHBOARD ===== -->
+      <sc-if value="{{ isMan }}" hint-placeholder-val="{{ false }}">
+        <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:66px 24px 28px;gap:24px;box-sizing:border-box;">
+          <div style="width:150px;height:150px;border-radius:50%;background:{{ manCircleColor }};box-shadow:0 2px 10px rgba(43,42,40,0.14);"></div>
+          <div style="text-align:center;">
+            <div style="font-family:'Fraunces',serif;font-size:19px;font-weight:500;max-width:230px;">{{ manCopy }}</div>
+          </div>
+          <div onClick="{{ confirmSeen }}" style="{{ confirmButtonStyle }}">{{ confirmLabel }}</div>
+        </div>
+      </sc-if>
+
+    </div>
+  </x-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;chartStampSize&quot;: {&quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 60, &quot;min&quot;: 44, &quot;max&quot;: 76, &quot;step&quot;: 2, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Gráfico do ciclo&quot;},
+  &quot;chartGroupByPhase&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Gráfico do ciclo&quot;},
+  &quot;chartShowLegend&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Gráfico do ciclo&quot;}
+}">
+class Component extends DCLogic {
+  state = {
+    section: 'capture',
+    step: 'bleeding',
+    answers: {},
+    todayRegistered: false,
+    seen: false,
+  };
+
+  cycleDay = 12;
+
+  chartFixture = [
+    { day: 1,  color: 'red',    rawCode: '4B',   intercourse: false, peakLabel: '', phase: 'Menstruação' },
+    { day: 2,  color: 'red',    rawCode: '3B',   intercourse: false, peakLabel: '', phase: 'Menstruação' },
+    { day: 3,  color: 'red',    rawCode: '2B',   intercourse: false, peakLabel: '', phase: 'Menstruação' },
+    { day: 4,  color: 'red',    rawCode: '1B',   intercourse: false, peakLabel: '', phase: 'Menstruação' },
+    { day: 5,  color: 'green',  rawCode: '0S',   intercourse: false, peakLabel: '', phase: 'Infértil' },
+    { day: 6,  color: 'green',  rawCode: '0S',   intercourse: false, peakLabel: '', phase: 'Infértil' },
+    { day: 7,  color: 'green',  rawCode: '0S',   intercourse: true,  peakLabel: '', phase: 'Infértil' },
+    { day: 8,  color: 'green',  rawCode: '2WX1', intercourse: false, peakLabel: '', phase: 'Infértil' },
+    { day: 9,  color: 'white',  rawCode: '6CX2', intercourse: false, peakLabel: '', phase: 'Fértil' },
+    { day: 10, color: 'white',  rawCode: '8CX3', intercourse: true,  peakLabel: '', phase: 'Fértil' },
+    { day: 11, color: 'white',  rawCode: '10CX4',intercourse: false, peakLabel: 'P', phase: 'Fértil' },
+    { day: 12, color: 'yellow', rawCode: '2WX2', intercourse: false, peakLabel: 'P+1', phase: 'Pós-Ápice' },
+    { day: 13, color: 'yellow', rawCode: '2WX1', intercourse: false, peakLabel: 'P+2', phase: 'Pós-Ápice' },
+    { day: 14, color: 'yellow', rawCode: '0S',   intercourse: false, peakLabel: 'P+3', phase: 'Pós-Ápice' },
+    { day: 15, color: 'green',  rawCode: '0S',   intercourse: false, peakLabel: '', phase: 'Infértil' },
+    { day: 16, color: 'green',  rawCode: '0S',   intercourse: false, peakLabel: '', phase: 'Infértil' },
+  ];
+
+  optionStyle(selected) {
+    return {
+      minHeight: '48px',
+      display: 'flex',
+      alignItems: 'center',
+      padding: '0 18px',
+      fontSize: '16px',
+      fontWeight: 500,
+      color: '#2B2A28',
+      background: selected ? '#EFEBE2' : '#FFFFFF',
+      border: selected ? '1.5px solid #3B4C63' : '1.5px solid #D8D3C7',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      flex: 1,
+    };
+  }
+
+  buildChartGroups() {
+    const days = this.chartFixture.map(d => ({ ...d, seed: '2026-07-' + String(d.day).padStart(2, '0') }));
+    const grouped = this.props.chartGroupByPhase ?? true;
+    if (!grouped) {
+      return [{ label: 'Ciclo completo', days }];
+    }
+    const groups = [];
+    for (const d of days) {
+      const last = groups[groups.length - 1];
+      if (last && last.label === d.phase) last.days.push(d);
+      else groups.push({ label: d.phase, days: [d] });
+    }
+    return groups;
+  }
+
+  setStep(step) { this.setState({ step }); }
+  setAnswer(key, value) { this.setState(s => ({ answers: { ...s.answers, [key]: value } })); }
+
+  renderVals() {
+    const s = this.state.section;
+    const step = this.state.step;
+    const answers = this.state.answers;
+
+    const tabDefs = [
+      { key: 'capture', label: 'Captura' },
+      { key: 'chart', label: 'Gráfico' },
+      { key: 'woman', label: 'Dashboard M' },
+      { key: 'man', label: 'Dashboard H' },
+    ];
+    const tabs = tabDefs.map(t => ({
+      label: t.label,
+      onClick: () => this.setState({ section: t.key, step: 'bleeding' }),
+      style: {
+        padding: '9px 16px',
+        borderRadius: '999px',
+        fontSize: '13px',
+        fontWeight: 600,
+        cursor: 'pointer',
+        color: s === t.key ? '#FFFFFF' : '#6B6862',
+        background: s === t.key ? '#3B4C63' : 'transparent',
+      },
+    }));
+
+    const bleedingOptions = ['Não', 'Muito leve', 'Leve', 'Moderado', 'Intenso'].map(label => ({
+      label,
+      onClick: () => { this.setAnswer('bleeding', label); this.setStep('sensation'); },
+      style: this.optionStyle(answers.bleeding === label),
+    }));
+
+    const sensationOptions = ['Seco', 'Úmido', 'Molhado', 'Lubrificante'].map(label => ({
+      label,
+      onClick: () => {
+        this.setAnswer('sensation', label);
+        this.setStep(label === 'Seco' ? 'intercourse' : 'mucusColor');
+      },
+      style: this.optionStyle(answers.sensation === label),
+    }));
+
+    const mucusColorOptions = ['Transparente', 'Turvo', 'Branco', 'Amarelo claro', 'Com sangue'].map(label => ({
+      label,
+      onClick: () => { this.setAnswer('mucusColor', label); this.setStep('mucusStretch'); },
+      style: this.optionStyle(answers.mucusColor === label),
+    }));
+
+    const mucusStretchOptions = ['Não esticava', 'Esticava um pouco', 'Esticava bastante'].map(label => ({
+      label,
+      onClick: () => { this.setAnswer('mucusStretch', label); this.setStep('intercourse'); },
+      style: this.optionStyle(answers.mucusStretch === label),
+    }));
+
+    const intercourseOptions = ['Sim', 'Não'].map(label => ({
+      label,
+      onClick: () => { this.setAnswer('intercourse', label); this.setStep('done'); },
+      style: this.optionStyle(answers.intercourse === label),
+    }));
+
+    const dotIndexMap = {
+      bleeding: 0,
+      sensation: 1,
+      mucusColor: 2,
+      mucusStretch: 2,
+      intercourse: answers.sensation === 'Seco' ? 2 : 3,
+      done: -1,
+    };
+    const totalDots = answers.sensation && answers.sensation !== 'Seco' ? 4 : 3;
+    const activeDot = dotIndexMap[step];
+    const dots = Array.from({ length: totalDots }, (_, i) => ({
+      style: {
+        width: '7px',
+        height: '7px',
+        borderRadius: '50%',
+        background: i === activeDot ? '#3B4C63' : '#D8D3C7',
+      },
+    }));
+
+    const backMap = { sensation: 'bleeding', mucusColor: 'sensation', mucusStretch: 'mucusColor', intercourse: answers.sensation === 'Seco' ? 'sensation' : 'mucusStretch' };
+    const goBack = () => { if (backMap[step]) this.setStep(backMap[step]); };
+
+    const todayFixture = this.chartFixture[this.chartFixture.length - 1];
+
+    return {
+      deviceTitle: 'Creighton',
+      tabs,
+      isCapture: s === 'capture',
+      isChart: s === 'chart',
+      isWoman: s === 'woman',
+      isMan: s === 'man',
+      cycleDay: this.cycleDay,
+      showBack: !!backMap[step],
+      goBack,
+      stepIsBleeding: step === 'bleeding',
+      stepIsSensation: step === 'sensation',
+      stepIsMucusColor: step === 'mucusColor',
+      stepIsMucusStretch: step === 'mucusStretch',
+      stepIsIntercourse: step === 'intercourse',
+      stepIsDone: step === 'done',
+      bleedingOptions, sensationOptions, mucusColorOptions, mucusStretchOptions, intercourseOptions,
+      dots,
+      backToWoman: () => this.setState({ section: 'woman', step: 'bleeding', todayRegistered: true }),
+
+      chartDays: this.chartFixture.map(d => ({ ...d, seed: '2026-07-' + String(d.day).padStart(2, '0') })),
+      chartPhaseGroups: this.buildChartGroups(),
+      stampSize: this.props.chartStampSize ?? 60,
+      showChartLegend: this.props.chartShowLegend ?? true,
+      legendItems: [
+        { color: 'red', label: 'Sangramento' },
+        { color: 'green', label: 'Seco / infértil' },
+        { color: 'white', label: 'Muco fértil' },
+        { color: 'yellow', label: 'Protocolo PIB' },
+      ],
+
+      todayRegistered: this.state.todayRegistered,
+      notRegistered: !this.state.todayRegistered,
+      todayColor: todayFixture.color,
+      todayCode: todayFixture.rawCode,
+      goChart: () => this.setState({ section: 'chart' }),
+      startCapture: () => this.setState({ section: 'capture', step: 'bleeding', answers: {} }),
+
+      manCircleColor: { red: '#E02424', green: '#16A34A', white: '#FFFFFF', yellow: '#EAB308' }[todayFixture.color],
+      manCopy: todayFixture.color === 'red' ? 'hoje é um dia de menstruação' : (todayFixture.color === 'green' ? 'hoje é um dia livre' : 'hoje é um dia de atenção'),
+      confirmSeen: () => this.setState({ seen: true }),
+      confirmLabel: this.state.seen ? 'Visto' : 'Confirmar que vi',
+      confirmButtonStyle: {
+        fontSize: '13px',
+        fontWeight: 600,
+        color: this.state.seen ? '#6B6862' : '#3B4C63',
+        border: '1px solid ' + (this.state.seen ? '#D8D3C7' : '#3B4C63'),
+        borderRadius: '6px',
+        padding: '10px 20px',
+        cursor: 'pointer',
+        minHeight: '44px',
+        display: 'flex',
+        alignItems: 'center',
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>

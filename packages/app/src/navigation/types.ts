@@ -8,4 +8,5 @@ export type RootStackParamList = {
   Chart: undefined;
   InvitePartner: undefined;
   ExportPdf: undefined;
+  Settings: undefined;
 };

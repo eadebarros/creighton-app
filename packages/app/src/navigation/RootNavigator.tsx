@@ -10,6 +10,7 @@ import { ConfirmationScreen } from '../screens/capture/ConfirmationScreen';
 import { ChartScreen } from '../screens/chart/ChartScreen';
 import { InvitePartnerScreen } from '../screens/partner/InvitePartnerScreen';
 import { ExportPdfScreen } from '../screens/export/ExportPdfScreen';
+import { SettingsHubScreen } from '../screens/settings/SettingsHubScreen';
 import { getDb } from '../db/client';
 import { getActiveCycle } from '../db/cycleRepository';
 import { hasEntryForDate } from '../db/entryRepository';
@@ -49,6 +50,7 @@ export function RootNavigator() {
           <Stack.Screen name="Chart" component={ChartScreen} />
           <Stack.Screen name="InvitePartner" component={InvitePartnerScreen} />
           <Stack.Screen name="ExportPdf" component={ExportPdfScreen} />
+          <Stack.Screen name="Settings" component={SettingsHubScreen} />
         </Stack.Navigator>
       </CaptureFlowProvider>
     </NavigationContainer>

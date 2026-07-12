@@ -14,6 +14,11 @@ export const colors = {
   paperDark: '#1C1B19',
   accent: '#3B4C63',
   line: '#D8D3C7',
+
+  // Destructive actions in Perfil & Configurações (SPEC 03) — deliberately
+  // distinct from the clinical `red` above. Never use `red` outside
+  // <StampBadge>, and never use `danger` inside it or the Dashboard do Homem circle.
+  danger: '#B3423A',
 } as const;
 
 export const fonts = {

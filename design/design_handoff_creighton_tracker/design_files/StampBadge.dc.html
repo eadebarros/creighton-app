@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+</helmet>
+<div style="display:inline-flex;flex-direction:column;align-items:center;position:relative;width:{{ sizePx }}px;">
+  <sc-if value="{{ hasPeak }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:#6B6862;letter-spacing:0.03em;white-space:nowrap;">{{ peakLabel }}</div>
+  </sc-if>
+  <div style="{{ stampStyle }}">
+    <sc-if value="{{ isWhite }}" hint-placeholder-val="{{ false }}">
+      <svg width="{{ iconSize }}" height="{{ iconSize }}" viewBox="0 0 24 24" style="opacity:0.55;">
+        <circle cx="12" cy="7" r="4" fill="none" stroke="#2B2A28" stroke-width="1.4"></circle>
+        <circle cx="12" cy="17" r="6.5" fill="none" stroke="#2B2A28" stroke-width="1.4"></circle>
+      </svg>
+    </sc-if>
+    <sc-if value="{{ showIntercourseMark }}" hint-placeholder-val="{{ false }}">
+      <div style="{{ intercourseMarkStyle }}">I</div>
+    </sc-if>
+    <div style="{{ codeStyle }}">{{ rawCode }}</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: {&quot;width&quot;: 90, &quot;height&quot;: 100},
+  &quot;color&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;green&quot;, &quot;options&quot;: [&quot;red&quot;, &quot;green&quot;, &quot;white&quot;, &quot;yellow&quot;], &quot;tsType&quot;: &quot;'red' | 'green' | 'white' | 'yellow'&quot;},
+  &quot;rawCode&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;8CX2&quot;, &quot;tsType&quot;: &quot;string&quot;},
+  &quot;intercourse&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;},
+  &quot;peakLabel&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;&quot;, &quot;tsType&quot;: &quot;string&quot;},
+  &quot;daySeed&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;1&quot;, &quot;tsType&quot;: &quot;string | number&quot;},
+  &quot;size&quot;: {&quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 64, &quot;min&quot;: 40, &quot;max&quot;: 120, &quot;step&quot;: 2, &quot;tsType&quot;: &quot;number&quot;}
+}">
+class Component extends DCLogic {
+  hashSeed(seed) {
+    const s = String(seed ?? '0');
+    let h = 0;
+    for (let i = 0; i < s.length; i++) {
+      h = (h * 31 + s.charCodeAt(i)) | 0;
+    }
+    return h;
+  }
+
+  renderVals() {
+    const color = this.props.color || 'green';
+    const rawCode = this.props.rawCode ?? '';
+    const intercourse = !!this.props.intercourse;
+    const peakLabel = this.props.peakLabel || '';
+    const daySeed = this.props.daySeed ?? rawCode ?? '1';
+    const size = this.props.size ?? 64;
+
+    const tokens = {
+      red:    { bg: '#E02424', ink: '#FFFFFF' },
+      green:  { bg: '#16A34A', ink: '#FFFFFF' },
+      white:  { bg: '#FFFFFF', ink: '#2B2A28' },
+      yellow: { bg: '#EAB308', ink: '#2B2A28' },
+    };
+    const t = tokens[color] || tokens.green;
+
+    const h = this.hashSeed(daySeed);
+    const rotation = ((h % 601) / 100) - 3; // deterministic -3..3 deg
+
+    const borderTone = color === 'white' ? 'rgba(43,42,40,0.14)' : 'rgba(0,0,0,0.12)';
+
+    const stampStyle = {
+      width: size + 'px',
+      height: size + 'px',
+      background: t.bg,
+      borderRadius: '4px',
+      border: color === 'white' ? '1px solid rgba(43,42,40,0.10)' : 'none',
+      transform: `rotate(${rotation.toFixed(2)}deg)`,
+      boxShadow: `0 1px 2px rgba(43,42,40,0.10), 0 3px 0 ${borderTone}`,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: intercourse || color === 'white' ? 'space-between' : 'flex-end',
+      padding: Math.max(4, size * 0.08) + 'px',
+      boxSizing: 'border-box',
+      position: 'relative',
+    };
+
+    const codeStyle = {
+      fontFamily: "'IBM Plex Mono', monospace",
+      fontWeight: 600,
+      fontSize: Math.max(9, size * 0.16) + 'px',
+      color: t.ink,
+      opacity: 0.85,
+      letterSpacing: '0.02em',
+    };
+
+    const intercourseMarkStyle = {
+      position: 'absolute',
+      top: Math.max(2, size * 0.05) + 'px',
+      right: Math.max(2, size * 0.05) + 'px',
+      fontFamily: "'IBM Plex Mono', monospace",
+      fontWeight: 600,
+      fontSize: Math.max(9, size * 0.14) + 'px',
+      color: t.ink,
+      opacity: 0.7,
+      lineHeight: 1,
+    };
+
+    return {
+      sizePx: size,
+      isWhite: color === 'white',
+      iconSize: Math.max(14, size * 0.34),
+      showIntercourseMark: intercourse,
+      hasPeak: !!peakLabel,
+      peakLabel,
+      rawCode,
+      stampStyle,
+      codeStyle,
+      intercourseMarkStyle,
+    };
+  }
+}
+</script>
+</body>
+</html>

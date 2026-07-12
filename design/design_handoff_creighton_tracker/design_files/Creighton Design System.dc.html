@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #F7F4EE; }
+    * { box-sizing: border-box; }
+  </style>
+</helmet>
+<div style="font-family:'Inter',sans-serif;background:#F7F4EE;color:#2B2A28;min-height:100vh;padding:56px 64px 96px;">
+
+  <div style="max-width:1040px;margin:0 auto;">
+    <div style="font-family:'Fraunces',serif;font-size:14px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6B6862;margin-bottom:8px;">Creighton Tracker</div>
+    <h1 style="font-family:'Fraunces',serif;font-size:40px;font-weight:500;margin:0 0 12px;">Design System</h1>
+    <p style="font-size:16px;line-height:1.6;color:#6B6862;max-width:640px;margin:0 0 56px;">Tokens e componente de assinatura para o diário clínico Creighton. Referência para implementação em React Native / Expo.</p>
+
+    <!-- Clinical colors -->
+    <section style="margin-bottom:56px;">
+      <h2 style="font-family:'Fraunces',serif;font-size:22px;font-weight:500;margin:0 0 6px;">Cores clínicas</h2>
+      <p style="font-size:14px;color:#6B6862;margin:0 0 24px;max-width:600px;">Fixas. Aparecem <strong>somente</strong> em <code style="font-family:'IBM Plex Mono',monospace;background:#EFEBE2;padding:2px 6px;border-radius:4px;">&lt;StampBadge&gt;</code> — nunca em botões, links ou navegação.</p>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;">
+        <sc-for list="{{ clinicalColors }}" as="c" hint-placeholder-count="4">
+          <div style="width:180px;">
+            <div style="height:88px;border-radius:12px;background:{{ c.hex }};border:{{ c.border }};box-shadow:0 1px 3px rgba(43,42,40,0.08);"></div>
+            <div style="margin-top:10px;font-size:14px;font-weight:600;">{{ c.name }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6B6862;">{{ c.hex }}</div>
+            <div style="font-size:12px;color:#6B6862;margin-top:2px;">{{ c.use }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- Support palette -->
+    <section style="margin-bottom:56px;">
+      <h2 style="font-family:'Fraunces',serif;font-size:22px;font-weight:500;margin:0 0 6px;">Paleta de apoio</h2>
+      <p style="font-size:14px;color:#6B6862;margin:0 0 24px;max-width:600px;">Base neutra "papel". Usada em toda a UI exceto o selo.</p>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;">
+        <sc-for list="{{ supportColors }}" as="c" hint-placeholder-count="6">
+          <div style="width:150px;">
+            <div style="height:72px;border-radius:12px;background:{{ c.hex }};border:1px solid rgba(43,42,40,0.08);box-shadow:0 1px 3px rgba(43,42,40,0.06);"></div>
+            <div style="margin-top:10px;font-size:13px;font-weight:600;">{{ c.name }}</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B6862;">{{ c.hex }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- Typography -->
+    <section style="margin-bottom:56px;">
+      <h2 style="font-family:'Fraunces',serif;font-size:22px;font-weight:500;margin:0 0 24px;">Tipografia</h2>
+      <div style="display:flex;flex-direction:column;gap:28px;">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#6B6862;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:8px;">Display — Fraunces</div>
+          <div style="font-family:'Fraunces',serif;font-size:44px;font-weight:500;">Dia 12 do ciclo</div>
+          <div style="font-size:13px;color:#6B6862;margin-top:4px;">Títulos de tela e número do dia — nunca em corpo de texto.</div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#6B6862;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:8px;">Corpo — Inter</div>
+          <div style="font-family:'Inter',sans-serif;font-size:17px;font-weight:400;">Como estava a sensação hoje?</div>
+          <div style="font-family:'Inter',sans-serif;font-size:15px;font-weight:600;margin-top:6px;">REGISTRAR HOJE</div>
+          <div style="font-size:13px;color:#6B6862;margin-top:4px;">400/500 para texto, 600 para labels de ação.</div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#6B6862;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:8px;">Dado — IBM Plex Mono</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;">8CX2 · BCX3</div>
+          <div style="font-size:13px;color:#6B6862;margin-top:4px;">raw_code do selo — evita ambiguidade de leitura ("8C" vs "BC").</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Spacing / radius -->
+    <section style="margin-bottom:56px;">
+      <h2 style="font-family:'Fraunces',serif;font-size:22px;font-weight:500;margin:0 0 20px;">Espaçamento &amp; raio</h2>
+      <div style="display:flex;gap:40px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#6B6862;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:10px;">Escala (4px base)</div>
+          <div style="display:flex;align-items:flex-end;gap:10px;">
+            <sc-for list="{{ spacingScale }}" as="s" hint-placeholder-count="6">
+              <div style="text-align:center;">
+                <div style="width:{{ s }}px;height:{{ s }}px;background:#3B4C63;border-radius:3px;"></div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6B6862;margin-top:6px;">{{ s }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:#6B6862;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:10px;">Raio</div>
+          <div style="display:flex;gap:16px;">
+            <div style="text-align:center;">
+              <div style="width:56px;height:56px;background:#EFEBE2;border-radius:6px;border:1px solid #D8D3C7;"></div>
+              <div style="font-size:11px;color:#6B6862;margin-top:6px;">sm · 6px</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="width:56px;height:56px;background:#EFEBE2;border-radius:12px;border:1px solid #D8D3C7;"></div>
+              <div style="font-size:11px;color:#6B6862;margin-top:6px;">md · 12px</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="width:56px;height:56px;background:#EFEBE2;border-radius:4px;border:1px solid #D8D3C7;"></div>
+              <div style="font-size:11px;color:#6B6862;margin-top:6px;">stamp · 4px</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- StampBadge showcase -->
+    <section>
+      <h2 style="font-family:'Fraunces',serif;font-size:22px;font-weight:500;margin:0 0 6px;">Componente de assinatura — &lt;StampBadge&gt;</h2>
+      <p style="font-size:14px;color:#6B6862;margin:0 0 28px;max-width:640px;">Selo de papel colado. Quadrado, raio menor que o resto da UI, leve rotação fixa por dia (seed = data), sombra de "espessura colada". Único lugar onde os 4 tokens clínicos aparecem.</p>
+
+      <div style="display:flex;gap:36px;flex-wrap:wrap;background:#FFFFFF;border:1px solid #D8D3C7;border-radius:12px;padding:32px;box-shadow:0 1px 3px rgba(43,42,40,0.08);">
+        <div style="text-align:center;">
+          <dc-import name="StampBadge" color="red" raw-code="6RX0" day-seed="2026-07-01" hint-size="90,100"></dc-import>
+          <div style="font-size:12px;color:#6B6862;margin-top:10px;">Sangramento</div>
+        </div>
+        <div style="text-align:center;">
+          <dc-import name="StampBadge" color="green" raw-code="1S" day-seed="2026-07-02" hint-size="90,100"></dc-import>
+          <div style="font-size:12px;color:#6B6862;margin-top:10px;">Seco / infértil</div>
+        </div>
+        <div style="text-align:center;">
+          <dc-import name="StampBadge" color="white" raw-code="8CX2" day-seed="2026-07-03" hint-size="90,100"></dc-import>
+          <div style="font-size:12px;color:#6B6862;margin-top:10px;">Muco fértil</div>
+        </div>
+        <div style="text-align:center;">
+          <dc-import name="StampBadge" color="yellow" raw-code="2WX3" day-seed="2026-07-04" hint-size="90,100"></dc-import>
+          <div style="font-size:12px;color:#6B6862;margin-top:10px;">Protocolo PIB</div>
+        </div>
+        <div style="text-align:center;">
+          <dc-import name="StampBadge" color="white" raw-code="10KX4" intercourse="{{ true }}" peak-label="P" day-seed="2026-07-05" hint-size="90,120"></dc-import>
+          <div style="font-size:12px;color:#6B6862;margin-top:10px;">Ápice + relação</div>
+        </div>
+        <div style="text-align:center;">
+          <dc-import name="StampBadge" color="green" raw-code="4S" peak-label="P+3" day-seed="2026-07-06" hint-size="90,120"></dc-import>
+          <div style="font-size:12px;color:#6B6862;margin-top:10px;">P+3, código curto</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      clinicalColors: [
+        { name: 'Vermelho', hex: '#E02424', use: 'Selo de sangramento', border: 'none' },
+        { name: 'Verde', hex: '#16A34A', use: 'Selo seco / infértil', border: 'none' },
+        { name: 'Branco', hex: '#FFFFFF', use: 'Muco fértil (com ícone)', border: '1px solid #D8D3C7' },
+        { name: 'Amarelo', hex: '#EAB308', use: 'Protocolo PIB / lactação', border: 'none' },
+      ],
+      supportColors: [
+        { name: 'Paper', hex: '#F7F4EE' },
+        { name: 'Ink', hex: '#2B2A28' },
+        { name: 'Ink muted', hex: '#6B6862' },
+        { name: 'Paper dark', hex: '#1C1B19' },
+        { name: 'Accent', hex: '#3B4C63' },
+        { name: 'Line', hex: '#D8D3C7' },
+      ],
+      spacingScale: [4, 8, 12, 16, 24, 32],
+    };
+  }
+}
+</script>
+</body>
+</html>

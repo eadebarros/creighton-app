@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #EFEBE2; }
+    * { box-sizing: border-box; }
+    @keyframes ct-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    input::placeholder { color: #A8A399; }
+  </style>
+</helmet>
+<div style="font-family:'Inter',sans-serif;min-height:100vh;background:#EFEBE2;padding:40px 24px 80px;display:flex;flex-direction:column;align-items:center;">
+
+  <div style="max-width:560px;text-align:center;margin-bottom:24px;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6B6862;margin-bottom:6px;">Creighton Tracker</div>
+    <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:500;">Perfil &amp; Configurações — Telas</div>
+    <div style="font-size:13px;color:#6B6862;margin-top:4px;">7 telas · handoff isolado para o Coder</div>
+  </div>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:600px;margin-bottom:14px;">
+    <sc-for list="{{ screenChips }}" as="s" hint-placeholder-count="7">
+      <div onClick="{{ s.onClick }}" style="{{ s.style }}">{{ s.label }}</div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ hasStateChips }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:600px;margin-bottom:28px;">
+      <sc-for list="{{ stateChips }}" as="c" hint-placeholder-count="3">
+        <div onClick="{{ c.onClick }}" style="{{ c.style }}">{{ c.label }}</div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="{{ 402 }}" height="{{ 874 }}" hint-size="402,874">
+    <div style="width:100%;height:100%;background:#F7F4EE;color:#2B2A28;overflow:hidden;position:relative;">
+
+      <!-- 1. SETTINGS HUB -->
+      <sc-if value="{{ isS1 }}" hint-placeholder-val="{{ true }}">
+        <div style="padding:60px 24px 24px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;overflow-y:auto;">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
+            <div style="width:48px;height:48px;border-radius:50%;background:#3B4C63;color:#FFFFFF;font-family:'Fraunces',serif;font-size:18px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;">M</div>
+            <div>
+              <div style="font-family:'Fraunces',serif;font-size:17px;font-weight:500;">Marina Silva</div>
+              <div style="font-size:12px;color:#6B6862;">marina.silva@email.com</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:#3B4C63;font-weight:600;margin-bottom:8px;">Modo atual: Regular · desde 12/05</div>
+
+          <div style="{{ sectionLabelStyle }}">Método</div>
+          <sc-for list="{{ methodItems }}" as="it" hint-placeholder-count="2">
+            <div style="{{ rowStyle }}">
+              <div style="font-size:15px;">{{ it.label }}</div>
+              <div style="font-size:13px;color:#6B6862;">{{ it.value }}</div>
+            </div>
+          </sc-for>
+
+          <div style="{{ sectionLabelStyle }}">Casal</div>
+          <sc-for list="{{ casalItems }}" as="it" hint-placeholder-count="2">
+            <div style="{{ rowStyle }}">
+              <div style="font-size:15px;">{{ it.label }}</div>
+              <div style="font-size:13px;color:#6B6862;">{{ it.value }}</div>
+            </div>
+          </sc-for>
+
+          <div style="{{ sectionLabelStyle }}">Conta</div>
+          <sc-for list="{{ contaItems }}" as="it" hint-placeholder-count="2">
+            <div style="{{ rowStyle }}">
+              <div style="font-size:15px;">{{ it.label }}</div>
+              <div style="font-size:13px;color:#6B6862;">{{ it.value }}</div>
+            </div>
+          </sc-for>
+
+          <div style="{{ sectionLabelStyle }}">Dados &amp; privacidade</div>
+          <sc-for list="{{ dadosItems }}" as="it" hint-placeholder-count="2">
+            <div style="{{ rowStyle }}">
+              <div style="font-size:15px;">{{ it.label }}</div>
+              <div style="font-size:13px;color:#6B6862;">{{ it.value }}</div>
+            </div>
+          </sc-for>
+
+          <div style="margin-top:30px;padding-top:14px;border-top:1px solid #D8D3C7;">
+            <div style="padding:14px 0;font-size:15px;font-weight:600;color:#B3423A;cursor:pointer;min-height:48px;display:flex;align-items:center;">Excluir minha conta</div>
+          </div>
+
+          <div style="padding:14px 0;font-size:15px;cursor:pointer;min-height:48px;display:flex;align-items:center;">Sair</div>
+
+          <div style="flex:1;"></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B6862;text-align:center;margin-top:20px;">versão 1.0.0 · motor de regras v1.3</div>
+        </div>
+      </sc-if>
+
+      <!-- 2. PARTNER -->
+      <sc-if value="{{ isS2 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;">
+          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:500;margin-bottom:20px;">Parceiro</div>
+
+          <sc-if value="{{ partnerNoneState }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:13px;color:#6B6862;line-height:1.55;margin-bottom:6px;">Seu parceiro verá um status resumido do dia, sem detalhe bruto.</div>
+            <div style="font-size:13px;color:#3B4C63;font-weight:600;margin-bottom:22px;cursor:pointer;">Configurar privacidade antes &rarr;</div>
+            <div style="{{ primaryButtonStyle }}">Gerar convite</div>
+          </sc-if>
+
+          <sc-if value="{{ partnerPendingState }}" hint-placeholder-val="{{ false }}">
+            <div style="border:1px solid #D8D3C7;border-radius:10px;padding:22px;background:#FFFFFF;text-align:center;margin-bottom:14px;">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:0.06em;">7F2K-9QRT</div>
+              <div style="font-size:12px;color:#6B6862;margin-top:8px;">Expira em 18h</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="{{ primaryButtonStyle }}">Compartilhar</div>
+              <div style="{{ secondaryButtonStyle }}">Cancelar convite</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ partnerLinkedState }}" hint-placeholder-val="{{ true }}">
+            <div style="border:1px solid #D8D3C7;border-radius:10px;padding:16px;background:#FFFFFF;display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+              <div style="width:40px;height:40px;border-radius:50%;background:#EFEBE2;flex-shrink:0;"></div>
+              <div>
+                <div style="font-size:14px;font-weight:600;">Carlos Andrade</div>
+                <div style="font-size:12px;color:#6B6862;">Vinculado desde 03/06</div>
+              </div>
+            </div>
+            <div style="font-size:14px;color:#3B4C63;font-weight:600;padding:14px 0;cursor:pointer;">Privacidade do parceiro &rarr;</div>
+            <div style="flex:1;"></div>
+            <div onClick="{{ goToUnlinkConfirm }}" style="{{ dangerButtonStyle }}">Desvincular parceiro</div>
+          </sc-if>
+
+          <sc-if value="{{ partnerUnlinkConfirmState }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:13px;color:#6B6862;line-height:1.6;margin-bottom:20px;">Ele perde o acesso ao seu status imediatamente. Seus registros e histórico não são afetados.</div>
+            <div onClick="{{ toggleUnlinkAck }}" style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;min-height:48px;">
+              <div style="{{ unlinkCheckboxStyle }}">
+                <sc-if value="{{ unlinkAck }}" hint-placeholder-val="{{ false }}">
+                  <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6 L5 9 L10 2" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </sc-if>
+              </div>
+              <div style="font-size:13px;color:#2B2A28;line-height:1.45;padding-top:2px;">Estou ciente de que esta ação é imediata.</div>
+            </div>
+            <div style="flex:1;"></div>
+            <div style="{{ unlinkConfirmButtonStyle }}">Desvincular parceiro</div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- 3. CHANGE PASSWORD -->
+      <sc-if value="{{ isS3 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;">
+          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:500;margin-bottom:24px;">Alterar senha</div>
+
+          <sc-if value="{{ pwFilling }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div>
+                <div style="font-size:12px;font-weight:600;color:#6B6862;margin-bottom:6px;">Senha atual</div>
+                <input type="password" placeholder="Sua senha atual" style="{{ pwCurrentInputStyle }}"></input>
+                <sc-if value="{{ pwErrorCurrent }}" hint-placeholder-val="{{ false }}">
+                  <div style="font-size:12px;color:#2B2A28;font-weight:600;margin-top:6px;">Senha atual incorreta.</div>
+                </sc-if>
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:#6B6862;margin-bottom:6px;">Nova senha</div>
+                <input type="password" placeholder="Mínimo 8 caracteres" style="{{ pwInputStyle }}"></input>
+                <div style="display:flex;gap:4px;margin-top:8px;">
+                  <sc-for list="{{ strengthBars }}" as="b" hint-placeholder-count="4">
+                    <div style="{{ b }}"></div>
+                  </sc-for>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:#6B6862;margin-bottom:6px;">Confirmar nova senha</div>
+                <input type="password" placeholder="Repita a nova senha" style="{{ pwInputStyle }}"></input>
+              </div>
+              <div style="{{ primaryButtonStyle }}">Alterar senha</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ pwSuccess }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;">
+              <svg width="48" height="48" viewBox="0 0 52 52"><circle cx="26" cy="26" r="25" fill="none" stroke="#3B4C63" stroke-width="2"></circle><path d="M15 27 L22 34 L37 18" fill="none" stroke="#3B4C63" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:500;">Senha alterada</div>
+              <div style="font-size:13px;color:#6B6862;">Voltando para Configurações.</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- 4. NOTIFICATIONS -->
+      <sc-if value="{{ isS4 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;">
+          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:500;margin-bottom:22px;">Notificações</div>
+
+          <div style="padding:16px 0;border-bottom:1px solid #D8D3C7;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-size:15px;">Lembrete de registro diário</div>
+              <div onClick="{{ toggleReminder }}" style="{{ reminderTrackStyle }}">
+                <div style="{{ reminderKnobStyle }}"></div>
+              </div>
+            </div>
+            <sc-if value="{{ notifReminderOn }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
+                <div style="font-size:13px;color:#6B6862;">Horário</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#2B2A28;background:#FFFFFF;border:1px solid #D8D3C7;border-radius:6px;padding:8px 14px;">20:30</div>
+              </div>
+            </sc-if>
+          </div>
+
+          <sc-if value="{{ notifHasPartner }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:16px 0;border-bottom:1px solid #D8D3C7;display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-size:15px;max-width:230px;">Avisar quando meu parceiro confirmar que viu</div>
+              <div onClick="{{ togglePartnerAlert }}" style="{{ partnerAlertTrackStyle }}">
+                <div style="{{ partnerAlertKnobStyle }}"></div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- 5. DOWNLOAD DATA -->
+      <sc-if value="{{ isS5 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;">
+          <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:500;margin-bottom:14px;">Baixar meus dados</div>
+
+          <sc-if value="{{ downloadInitial }}" hint-placeholder-val="{{ true }}">
+            <div style="font-size:13px;color:#6B6862;line-height:1.6;margin-bottom:24px;">Todos os seus registros, incluindo histórico completo, em formato aberto JSON.</div>
+            <div style="{{ primaryButtonStyle }}">Gerar arquivo</div>
+          </sc-if>
+
+          <sc-if value="{{ downloadGenerating }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+              <div style="width:36px;height:36px;border-radius:50%;border:3px solid #D8D3C7;border-top-color:#3B4C63;animation:ct-spin 0.8s linear infinite;"></div>
+              <div style="font-size:14px;color:#6B6862;">Preparando seu arquivo…</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ downloadReady }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;">
+              <svg width="48" height="48" viewBox="0 0 52 52"><circle cx="26" cy="26" r="25" fill="none" stroke="#3B4C63" stroke-width="2"></circle><path d="M15 27 L22 34 L37 18" fill="none" stroke="#3B4C63" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:500;">Arquivo pronto</div>
+              <div style="{{ primaryButtonStyle }}">Compartilhar / baixar</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ downloadError }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;">
+              <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:500;">Não foi possível gerar</div>
+              <div style="font-size:13px;color:#6B6862;max-width:230px;">Tente novamente em instantes. Se o problema continuar, procure o suporte.</div>
+              <div style="{{ primaryButtonStyle }}">Tentar novamente</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- 6. DELETE ACCOUNT -->
+      <sc-if value="{{ isS6 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;">
+
+          <sc-if value="{{ deleteStep1 }}" hint-placeholder-val="{{ true }}">
+            <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:500;margin-bottom:16px;">Excluir minha conta</div>
+            <div style="font-size:13px;color:#2B2A28;line-height:1.7;margin-bottom:16px;">
+              Tudo é excluído definitivamente do servidor.<br></br>
+              Seu parceiro é desvinculado na hora.<br></br>
+              Não há recuperação após a exclusão.
+            </div>
+            <div style="border:1px solid #D8D3C7;border-radius:10px;padding:14px;background:#FFFFFF;margin-bottom:24px;">
+              <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Baixar meus dados antes</div>
+              <div style="font-size:12px;color:#6B6862;">Recomendado — leva menos de um minuto.</div>
+            </div>
+            <div style="flex:1;"></div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="{{ dangerButtonStyle }}">Continuar</div>
+              <div style="{{ secondaryButtonStyle }}">Cancelar</div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ deleteStep2 }}" hint-placeholder-val="{{ false }}">
+            <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:500;margin-bottom:20px;">Confirme sua senha</div>
+            <div style="font-size:12px;font-weight:600;color:#6B6862;margin-bottom:6px;">Senha</div>
+            <input type="password" placeholder="Sua senha" style="{{ pwInputStyle }}"></input>
+            <div style="flex:1;"></div>
+            <div style="{{ dangerButtonStyle }}">Continuar</div>
+          </sc-if>
+
+          <sc-if value="{{ deleteStep3 }}" hint-placeholder-val="{{ false }}">
+            <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:500;margin-bottom:12px;">Confirmação final</div>
+            <div style="font-size:13px;color:#6B6862;line-height:1.6;margin-bottom:16px;">Digite EXCLUIR abaixo para confirmar. Esta ação não pode ser desfeita.</div>
+            <input type="text" placeholder="EXCLUIR" value="{{ deleteTypedWord }}" onChange="{{ onDeleteWordChange }}" style="{{ pwInputStyle }}"></input>
+            <div style="flex:1;"></div>
+            <div style="{{ deleteFinalButtonStyle }}">Excluir minha conta</div>
+          </sc-if>
+
+          <sc-if value="{{ deleteDone }}" hint-placeholder-val="{{ false }}">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;">
+              <div style="font-family:'Fraunces',serif;font-size:19px;font-weight:500;">Sua conta foi excluída</div>
+              <div style="font-size:13px;color:#6B6862;max-width:240px;">Todos os seus dados foram removidos do servidor.</div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- 7. TERMS -->
+      <sc-if value="{{ isS7 }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:64px 24px 28px;height:100%;display:flex;flex-direction:column;box-sizing:border-box;overflow-y:auto;">
+          <div style="font-family:'Fraunces',serif;font-size:21px;font-weight:500;margin-bottom:6px;">Termos e disclaimer clínico</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6B6862;margin-bottom:20px;">Aceito em 12/05/2026 às 09:14</div>
+          <div style="font-size:15px;color:#2B2A28;line-height:1.75;">
+            Este aplicativo é um instrumento de acompanhamento para o Método de Ovulação Creighton, destinado ao uso em conjunto com orientação de instrutora credenciada.
+            <br></br><br></br>
+            Ele registra observações diárias fornecidas pela usuária e calcula padrões do ciclo segundo as regras do método. Os resultados não substituem avaliação médica, diagnóstico clínico ou orientação individual da instrutora responsável.
+            <br></br><br></br>
+            O uso contínuo deste app pressupõe acompanhamento ativo com instrutora Creighton credenciada. Decisões sobre planejamento familiar devem ser tomadas em conjunto com essa orientação profissional.
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </x-import>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;initialScreen&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;1&quot;, &quot;options&quot;: [&quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;,&quot;5&quot;,&quot;6&quot;,&quot;7&quot;], &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Navegação&quot;}
+}">
+class Component extends DCLogic {
+  state = {
+    screen: '1',
+    partnerState: 'linked',
+    unlinkAck: false,
+    pwState: 'filling',
+    notifHasPartner: true,
+    notifReminderOn: true,
+    notifPartnerAlert: true,
+    downloadState: 'initial',
+    deleteStep: 'step1',
+    deleteTypedWord: '',
+  };
+
+  screensMeta = [
+    { id: '1', label: '1. Configurações' },
+    { id: '2', label: '2. Parceiro' },
+    { id: '3', label: '3. Alterar senha' },
+    { id: '4', label: '4. Notificações' },
+    { id: '5', label: '5. Baixar dados' },
+    { id: '6', label: '6. Excluir conta' },
+    { id: '7', label: '7. Termos' },
+  ];
+
+  chipStyle(active) {
+    return {
+      padding: '9px 16px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+      color: active ? '#FFFFFF' : '#6B6862', background: active ? '#3B4C63' : '#FFFFFF',
+      border: active ? 'none' : '1px solid #D8D3C7',
+    };
+  }
+
+  smallChipStyle(active) {
+    return {
+      padding: '7px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+      color: active ? '#FFFFFF' : '#6B6862', background: active ? '#3B4C63' : '#FFFFFF',
+      border: active ? 'none' : '1px solid #D8D3C7',
+    };
+  }
+
+  inputStyle() {
+    return {
+      width: '100%', minHeight: '48px', border: '1.5px solid #D8D3C7', borderRadius: '6px', padding: '0 14px',
+      fontSize: '15px', fontFamily: "'Inter',sans-serif", color: '#2B2A28', background: '#FFFFFF', boxSizing: 'border-box',
+    };
+  }
+
+  primaryButtonStyle() {
+    return {
+      minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#3B4C63',
+      color: '#FFFFFF', fontSize: '15px', fontWeight: 600, borderRadius: '6px', cursor: 'pointer', width: '100%', boxSizing: 'border-box',
+    };
+  }
+
+  dangerButtonStyle() {
+    return {
+      minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#B3423A',
+      color: '#FFFFFF', fontSize: '15px', fontWeight: 600, borderRadius: '6px', cursor: 'pointer', width: '100%', boxSizing: 'border-box',
+    };
+  }
+
+  secondaryButtonStyle() {
+    return {
+      minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FFFFFF',
+      color: '#2B2A28', fontSize: '15px', fontWeight: 600, borderRadius: '6px', cursor: 'pointer', width: '100%',
+      boxSizing: 'border-box', border: '1.5px solid #D8D3C7',
+    };
+  }
+
+  rowStyle() {
+    return { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: '1px solid #D8D3C7', cursor: 'pointer', minHeight: '48px' };
+  }
+
+  sectionLabelStyle() {
+    return { fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6B6862', marginTop: '22px', marginBottom: '2px' };
+  }
+
+  toggleTrackStyle(active) {
+    return { width: '44px', height: '26px', borderRadius: '13px', position: 'relative', cursor: 'pointer', background: active ? '#3B4C63' : '#D8D3C7', flexShrink: 0, transition: 'background 0.15s' };
+  }
+
+  toggleKnobStyle(active) {
+    return { width: '20px', height: '20px', borderRadius: '50%', background: '#FFFFFF', position: 'absolute', top: '3px', left: active ? '21px' : '3px', boxShadow: '0 1px 2px rgba(0,0,0,0.2)', transition: 'left 0.15s' };
+  }
+
+  renderVals() {
+    const s = this.state;
+
+    const screenChips = this.screensMeta.map(sc => ({
+      label: sc.label, onClick: () => this.setState({ screen: sc.id }), style: this.chipStyle(s.screen === sc.id),
+    }));
+
+    let stateChips = [];
+    if (s.screen === '2') {
+      stateChips = [
+        { key: 'none', label: 'Sem parceiro' },
+        { key: 'pending', label: 'Convite pendente' },
+        { key: 'linked', label: 'Vinculado' },
+        { key: 'unlinkConfirm', label: 'Confirmar desvínculo' },
+      ].map(o => ({ label: o.label, onClick: () => this.setState({ partnerState: o.key }), style: this.smallChipStyle(s.partnerState === o.key) }));
+    } else if (s.screen === '3') {
+      stateChips = [
+        { key: 'filling', label: 'Preenchendo' },
+        { key: 'errorCurrent', label: 'Senha atual incorreta' },
+        { key: 'success', label: 'Sucesso' },
+      ].map(o => ({ label: o.label, onClick: () => this.setState({ pwState: o.key }), style: this.smallChipStyle(s.pwState === o.key) }));
+    } else if (s.screen === '4') {
+      stateChips = [
+        { key: 'noPartner', label: 'Sem parceiro' },
+        { key: 'withPartner', label: 'Com parceiro' },
+        { key: 'reminderOff', label: 'Lembrete desligado' },
+        { key: 'reminderOn', label: 'Lembrete ligado' },
+      ].map(o => ({
+        label: o.label,
+        onClick: () => {
+          if (o.key === 'noPartner') this.setState({ notifHasPartner: false });
+          else if (o.key === 'withPartner') this.setState({ notifHasPartner: true });
+          else if (o.key === 'reminderOff') this.setState({ notifReminderOn: false });
+          else this.setState({ notifReminderOn: true });
+        },
+        style: this.smallChipStyle(
+          (o.key === 'noPartner' && !s.notifHasPartner) ||
+          (o.key === 'withPartner' && s.notifHasPartner) ||
+          (o.key === 'reminderOff' && !s.notifReminderOn) ||
+          (o.key === 'reminderOn' && s.notifReminderOn)
+        ),
+      }));
+    } else if (s.screen === '5') {
+      stateChips = [
+        { key: 'initial', label: 'Inicial' },
+        { key: 'generating', label: 'Gerando' },
+        { key: 'ready', label: 'Pronto' },
+        { key: 'error', label: 'Erro' },
+      ].map(o => ({ label: o.label, onClick: () => this.setState({ downloadState: o.key }), style: this.smallChipStyle(s.downloadState === o.key) }));
+    } else if (s.screen === '6') {
+      stateChips = [
+        { key: 'step1', label: 'Passo 1 · Consequências' },
+        { key: 'step2', label: 'Passo 2 · Senha' },
+        { key: 'step3', label: 'Passo 3 · Confirmar' },
+        { key: 'done', label: 'Encerrado' },
+      ].map(o => ({ label: o.label, onClick: () => this.setState({ deleteStep: o.key }), style: this.smallChipStyle(s.deleteStep === o.key) }));
+    }
+
+    const strengthBars = Array.from({ length: 4 }, (_, i) => ({ height: '5px', flex: 1, borderRadius: '3px', background: i < 3 ? '#3B4C63' : '#D8D3C7' }));
+
+    return {
+      screenChips,
+      hasStateChips: stateChips.length > 0,
+      stateChips,
+
+      isS1: s.screen === '1',
+      isS2: s.screen === '2',
+      isS3: s.screen === '3',
+      isS4: s.screen === '4',
+      isS5: s.screen === '5',
+      isS6: s.screen === '6',
+      isS7: s.screen === '7',
+
+      rowStyle: this.rowStyle(),
+      sectionLabelStyle: this.sectionLabelStyle(),
+      primaryButtonStyle: this.primaryButtonStyle(),
+      dangerButtonStyle: this.dangerButtonStyle(),
+      secondaryButtonStyle: this.secondaryButtonStyle(),
+
+      methodItems: [
+        { label: 'Modo de acompanhamento', value: 'Regular >' },
+        { label: 'Exportar para instrutora', value: '' },
+      ],
+      casalItems: [
+        { label: 'Parceiro', value: ({ none: 'Não vinculado', pending: 'Convite pendente', linked: 'Vinculado', unlinkConfirm: 'Vinculado' })[s.partnerState] },
+        { label: 'Privacidade do parceiro', value: '' },
+      ],
+      contaItems: [
+        { label: 'Alterar senha', value: '' },
+        { label: 'Notificações', value: '' },
+      ],
+      dadosItems: [
+        { label: 'Baixar meus dados', value: '' },
+        { label: 'Termos e disclaimer clínico', value: '' },
+      ],
+
+      partnerNoneState: s.partnerState === 'none',
+      partnerPendingState: s.partnerState === 'pending',
+      partnerLinkedState: s.partnerState === 'linked',
+      partnerUnlinkConfirmState: s.partnerState === 'unlinkConfirm',
+      goToUnlinkConfirm: () => this.setState({ partnerState: 'unlinkConfirm' }),
+      toggleUnlinkAck: () => this.setState({ unlinkAck: !s.unlinkAck }),
+      unlinkAck: s.unlinkAck,
+      unlinkCheckboxStyle: {
+        width: '22px', height: '22px', borderRadius: '4px', flexShrink: 0,
+        border: s.unlinkAck ? 'none' : '1.5px solid #D8D3C7', background: s.unlinkAck ? '#B3423A' : '#FFFFFF',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      },
+      unlinkConfirmButtonStyle: {
+        minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: s.unlinkAck ? '#B3423A' : '#D8D3C7', color: s.unlinkAck ? '#FFFFFF' : '#9A9588',
+        fontSize: '15px', fontWeight: 600, borderRadius: '6px', cursor: s.unlinkAck ? 'pointer' : 'default',
+        width: '100%', boxSizing: 'border-box',
+      },
+
+      pwFilling: s.pwState !== 'success',
+      pwSuccess: s.pwState === 'success',
+      pwErrorCurrent: s.pwState === 'errorCurrent',
+      pwCurrentInputStyle: { ...this.inputStyle(), border: s.pwState === 'errorCurrent' ? '1.5px solid #2B2A28' : '1.5px solid #D8D3C7' },
+      pwInputStyle: this.inputStyle(),
+      strengthBars,
+
+      notifHasPartner: s.notifHasPartner,
+      notifReminderOn: s.notifReminderOn,
+      toggleReminder: () => this.setState({ notifReminderOn: !s.notifReminderOn }),
+      togglePartnerAlert: () => this.setState({ notifPartnerAlert: !s.notifPartnerAlert }),
+      reminderTrackStyle: this.toggleTrackStyle(s.notifReminderOn),
+      reminderKnobStyle: this.toggleKnobStyle(s.notifReminderOn),
+      partnerAlertTrackStyle: this.toggleTrackStyle(s.notifPartnerAlert),
+      partnerAlertKnobStyle: this.toggleKnobStyle(s.notifPartnerAlert),
+
+      downloadInitial: s.downloadState === 'initial',
+      downloadGenerating: s.downloadState === 'generating',
+      downloadReady: s.downloadState === 'ready',
+      downloadError: s.downloadState === 'error',
+
+      deleteStep1: s.deleteStep === 'step1',
+      deleteStep2: s.deleteStep === 'step2',
+      deleteStep3: s.deleteStep === 'step3',
+      deleteDone: s.deleteStep === 'done',
+      deleteTypedWord: s.deleteTypedWord,
+      onDeleteWordChange: (e) => this.setState({ deleteTypedWord: e.target.value }),
+      deleteFinalButtonStyle: {
+        minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: s.deleteTypedWord.trim().toUpperCase() === 'EXCLUIR' ? '#B3423A' : '#D8D3C7',
+        color: s.deleteTypedWord.trim().toUpperCase() === 'EXCLUIR' ? '#FFFFFF' : '#9A9588',
+        fontSize: '15px', fontWeight: 600, borderRadius: '6px',
+        cursor: s.deleteTypedWord.trim().toUpperCase() === 'EXCLUIR' ? 'pointer' : 'default',
+        width: '100%', boxSizing: 'border-box',
+      },
+    };
+  }
+}
+
+</script>
+</body>
+</html>
