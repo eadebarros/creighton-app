@@ -7,6 +7,8 @@ import { RULES_ENGINE_VERSION } from '@creighton/rules-engine';
 import { getMe } from '../../api/client';
 import type { MeResponse } from '../../api/client';
 import { getApiBaseUrl } from '../../api/config';
+import { getDb } from '../../db/client';
+import { getPendingOutboxEntries } from '../../db/outboxRepository';
 import { resetAllLocalState } from '../../settings/localDataReset';
 import { colors, fonts, radii, spacing } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
@@ -62,7 +64,7 @@ export function SettingsHubScreen({ navigation }: Props) {
   const email = user?.primaryEmailAddress?.emailAddress ?? '';
   const initial = email.charAt(0).toUpperCase() || '?';
 
-  function handleResetTestAccount() {
+  function confirmResetTestAccount() {
     Alert.alert(
       'Resetar conta de teste',
       'Isso apaga todo o histórico (neste dispositivo e no servidor), reabre a onboarding e desconecta você. Use só para teste. Continuar?',
@@ -82,6 +84,23 @@ export function SettingsHubScreen({ navigation }: Props) {
             }
           },
         },
+      ],
+    );
+  }
+
+  async function handleResetTestAccount() {
+    const db = await getDb();
+    const pending = await getPendingOutboxEntries(db);
+    if (pending.length === 0) {
+      confirmResetTestAccount();
+      return;
+    }
+    Alert.alert(
+      'Há registros não sincronizados',
+      `${pending.length} registro(s) deste dispositivo ainda não foram enviados ao servidor. Resetar agora descarta esses registros.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Resetar mesmo assim', style: 'destructive', onPress: confirmResetTestAccount },
       ],
     );
   }
