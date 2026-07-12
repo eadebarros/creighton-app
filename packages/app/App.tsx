@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
+import * as WebBrowser from 'expo-web-browser';
 import { useFonts } from 'expo-font';
 import { ClerkProvider, ClerkLoaded, useAuth } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
@@ -19,6 +20,11 @@ if (!CLERK_PUBLISHABLE_KEY) {
 }
 
 SplashScreen.preventAutoHideAsync();
+
+// Required by expo-web-browser's OAuth redirect flow (Google/Apple sign-in
+// via Clerk's useSSO) — no-op on native, needed so a pending auth session
+// resolves correctly on web.
+WebBrowser.maybeCompleteAuthSession();
 
 // Daily registro reminder (SPEC 03 §3.3) — shows the banner/sound even if the
 // notification fires while the app happens to be in the foreground.

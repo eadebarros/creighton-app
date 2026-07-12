@@ -2,6 +2,7 @@
   "expo": {
     "name": "app",
     "slug": "app",
+    "scheme": "creighton",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -27,7 +28,8 @@
       "expo-sqlite",
       "@clerk/expo",
       "expo-secure-store",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-web-browser"
     ]
   }
 }

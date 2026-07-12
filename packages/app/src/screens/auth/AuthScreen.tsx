@@ -6,6 +6,7 @@ import { useSignIn, useSignUp } from '@clerk/expo';
 import { PasswordStrengthMeter } from '../../components/PasswordStrengthMeter';
 import { TextField } from '../../components/TextField';
 import { colors, fonts, radii, spacing } from '../../theme';
+import { OAuthButtons } from './OAuthButtons';
 
 type Mode = 'sign-in' | 'sign-up' | 'forgot-password';
 
@@ -105,6 +106,7 @@ function SignInForm({
             <Text style={styles.linkSmall}>Criar conta</Text>
           </Pressable>
         </View>
+        <OAuthButtons onError={setFormError} />
       </View>
     </ScrollView>
   );
@@ -216,6 +218,7 @@ function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
         <Pressable style={styles.button} onPress={handleSignUp} disabled={fetchStatus === 'fetching'}>
           <Text style={styles.buttonText}>{fetchStatus === 'fetching' ? 'Criando…' : 'Continuar'}</Text>
         </Pressable>
+        <OAuthButtons onError={setFormError} />
       </View>
 
       <Pressable onPress={onSwitchToSignIn}>
