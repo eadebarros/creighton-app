@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/expo';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ObservationsSheet } from '../../components/ObservationsSheet';
 import { StampBadge } from '../../components/StampBadge';
 import { stateToToken } from '@creighton/rules-engine';
+import { getApiBaseUrl } from '../../api/config';
 import { colors, fonts, radii, spacing } from '../../theme';
 import { getDb } from '../../db/client';
 import { getActiveCycle, getCycleVariantMode } from '../../db/cycleRepository';
 import { getFertilityStatesForCycle, hasEntryForDate } from '../../db/entryRepository';
 import { today } from '../../domain/dateMath';
+import { resetAllLocalState } from '../../settings/localDataReset';
 import { groupByContiguousPhase, peakRelationLabel } from './chartGrouping';
 import type { ChartDay, PhaseGroup } from './chartGrouping';
 import type { RootStackParamList } from '../../navigation/types';
@@ -26,7 +28,7 @@ const LEGEND_ITEMS: { color: 'RED' | 'GREEN' | 'WHITE' | 'YELLOW'; label: string
 
 export function ChartScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const { signOut } = useAuth();
+  const { signOut, getToken } = useAuth();
   const [groups, setGroups] = useState<PhaseGroup[] | null>(null);
   const [dayNumberByDate, setDayNumberByDate] = useState<Map<string, number>>(new Map());
   const [inObservationPhase, setInObservationPhase] = useState(false);
@@ -72,6 +74,30 @@ export function ChartScreen({ navigation }: Props) {
     loadChart();
   }, []);
 
+  function handleResetLocalData() {
+    Alert.alert(
+      'Resetar conta de teste',
+      'Isso apaga todo o histórico (neste dispositivo e no servidor), reabre a onboarding e desconecta você. Use só para teste. Continuar?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Resetar e sair',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await getToken();
+              if (!token) throw new Error('no token');
+              await resetAllLocalState(getApiBaseUrl(), token);
+              await signOut();
+            } catch {
+              Alert.alert('Falha ao resetar', 'Verifique a conexão e tente de novo.');
+            }
+          },
+        },
+      ],
+    );
+  }
+
   return (
     <View style={styles.screen}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
@@ -92,6 +118,9 @@ export function ChartScreen({ navigation }: Props) {
             </Pressable>
             <Pressable onPress={() => navigation.navigate('ExportPdf')}>
               <Text style={styles.signOutLabel}>Exportar para instrutora</Text>
+            </Pressable>
+            <Pressable onPress={handleResetLocalData}>
+              <Text style={styles.signOutLabel}>Resetar conta de teste</Text>
             </Pressable>
             <Pressable onPress={() => signOut()}>
               <Text style={styles.signOutLabel}>Sair</Text>

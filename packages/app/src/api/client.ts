@@ -206,6 +206,17 @@ export async function voidObservationRemote(baseUrl: string, token: string, obse
   }
 }
 
+/** Dev/testing affordance — wipes this account's clinical history server-side and resets onboarding. */
+export async function resetTestData(baseUrl: string, token: string): Promise<void> {
+  const res = await fetch(`${baseUrl}/me/reset-test-data`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new Error(`POST /me/reset-test-data failed: ${res.status}`);
+  }
+}
+
 export type ExportPeriod = 'current' | 'last3' | 'custom';
 
 export interface ExportPdfBody {

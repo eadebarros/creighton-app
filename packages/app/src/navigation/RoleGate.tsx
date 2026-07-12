@@ -10,13 +10,11 @@ import { resetLocalData } from '../db/schema';
 import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
 import { RoleChoiceScreen } from '../screens/onboarding/RoleChoiceScreen';
 import { PartnerDashboardScreen } from '../screens/partner/PartnerDashboardScreen';
+import { LAST_USER_CACHE_KEY, ROLE_CACHE_KEY } from '../settings/localDataReset';
 import { setCachedVariantMode } from '../settings/variantModeCache';
 import { colors, fonts, spacing } from '../theme';
 import { shouldShowRoleChoice } from './roleChoiceGate';
 import { RootNavigator } from './RootNavigator';
-
-const ROLE_CACHE_KEY = 'creighton.role';
-const LAST_USER_CACHE_KEY = 'creighton.lastClerkUserId';
 
 /**
  * The local SQLite DB has no per-user scoping of its own — it's one shared

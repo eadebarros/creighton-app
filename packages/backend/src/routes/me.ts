@@ -35,3 +35,35 @@ meRouter.patch('/me', requireUser, async (req, res, next) => {
     next(err);
   }
 });
+
+/**
+ * Dev/testing affordance — wipes this account's clinical history (cycles,
+ * entries, observations, fertility states) and resets onboarding so the app
+ * can be re-tested from a clean slate without a manual DB script. Always
+ * scoped to the caller's own userId, same as every other /me route.
+ */
+meRouter.post('/me/reset-test-data', requireUser, async (req, res, next) => {
+  try {
+    const userId = req.internalUser.id;
+    await prisma.$transaction(
+      async (tx) => {
+        const cycles = await tx.cycle.findMany({ where: { userId }, select: { id: true } });
+        const cycleIds = cycles.map((c) => c.id);
+        if (cycleIds.length > 0) {
+          await tx.dailyFertilityState.deleteMany({ where: { dailyEntry: { cycleId: { in: cycleIds } } } });
+          await tx.dailyEntry.deleteMany({ where: { cycleId: { in: cycleIds } } });
+          await tx.observation.deleteMany({ where: { cycleId: { in: cycleIds } } });
+          await tx.cycle.deleteMany({ where: { id: { in: cycleIds } } });
+        }
+        await tx.user.update({
+          where: { id: userId },
+          data: { instructorCredentialAck: false, currentVariantMode: 'REGULAR' },
+        });
+      },
+      { timeout: 30_000 },
+    );
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});

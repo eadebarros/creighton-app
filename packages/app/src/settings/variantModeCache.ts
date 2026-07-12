@@ -12,3 +12,7 @@ export async function getCachedVariantMode(): Promise<VariantMode> {
 export async function setCachedVariantMode(mode: VariantMode): Promise<void> {
   await SecureStore.setItemAsync(VARIANT_CACHE_KEY, mode);
 }
+
+export async function clearCachedVariantMode(): Promise<void> {
+  await SecureStore.deleteItemAsync(VARIANT_CACHE_KEY);
+}
