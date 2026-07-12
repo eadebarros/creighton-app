@@ -1,18 +1,19 @@
 import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import * as WebBrowser from 'expo-web-browser';
 import { useFonts } from 'expo-font';
-import { ClerkProvider, ClerkLoaded, useAuth } from '@clerk/expo';
+import { ClerkProvider, ClerkLoaded, ClerkLoading, useAuth } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 import { Fraunces_500Medium, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { IBMPlexMono_500Medium, IBMPlexMono_600SemiBold } from '@expo-google-fonts/ibm-plex-mono';
 import { RoleGate } from './src/navigation/RoleGate';
 import { AuthScreen } from './src/screens/auth/AuthScreen';
+import { colors } from './src/theme';
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 if (!CLERK_PUBLISHABLE_KEY) {
@@ -80,7 +81,12 @@ export default function App() {
   return (
     <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY} tokenCache={tokenCache}>
       <SafeAreaProvider>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, backgroundColor: colors.paper }}>
+          <ClerkLoading>
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ color: colors.inkMuted }}>Carregando…</Text>
+            </View>
+          </ClerkLoading>
           <ClerkLoaded>
             <AuthGate />
           </ClerkLoaded>
