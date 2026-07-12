@@ -83,6 +83,9 @@ export function ChartScreen({ navigation }: Props) {
             <Pressable onPress={() => navigation.navigate('InvitePartner')}>
               <Text style={styles.signOutLabel}>Convidar parceiro</Text>
             </Pressable>
+            <Pressable onPress={() => navigation.navigate('ExportPdf')}>
+              <Text style={styles.signOutLabel}>Exportar para instrutora</Text>
+            </Pressable>
             <Pressable onPress={() => signOut()}>
               <Text style={styles.signOutLabel}>Sair</Text>
             </Pressable>

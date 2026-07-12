@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useAuth } from '@clerk/expo';
+import { voidObservationRemote } from '../api/client';
+import { getApiBaseUrl } from '../api/config';
 import { getDb } from '../db/client';
 import { getObservationsForDate, voidObservation } from '../db/observationRepository';
 import type { ObservationRow } from '../db/observationRepository';
@@ -19,6 +22,7 @@ function formatTime(observedAt: string): string {
 
 /** Functional-first "anular observação" sheet (Adendo 01, Seção 3) — no elaborate design yet. */
 export function ObservationsSheet({ cycleId, date, onClose, onChanged }: Props) {
+  const { getToken } = useAuth();
   const [observations, setObservations] = useState<ObservationRow[] | null>(null);
 
   async function reload() {
@@ -41,6 +45,12 @@ export function ObservationsSheet({ cycleId, date, onClose, onChanged }: Props) 
           await voidObservation(db, observation.id);
           await reload();
           onChanged();
+          // Fire-and-forget: the local void already applied — the server
+          // just needs to eventually learn about it (partner dashboard,
+          // PDF export's voided count). Never blocks the UI.
+          getToken()
+            .then((token) => (token ? voidObservationRemote(getApiBaseUrl(), token, observation.id) : undefined))
+            .catch(() => {});
         },
       },
     ]);

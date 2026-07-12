@@ -7,4 +7,5 @@ export type RootStackParamList = {
   Confirmation: { observationCount: number };
   Chart: undefined;
   InvitePartner: undefined;
+  ExportPdf: undefined;
 };

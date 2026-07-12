@@ -194,3 +194,44 @@ export async function getPartnerAcknowledgments(baseUrl: string, token: string):
   const body: { acknowledgments: AcknowledgmentSummary[] } = await res.json();
   return body.acknowledgments;
 }
+
+/** Best-effort — the local void already happened; this just lets the server (and other devices) know. */
+export async function voidObservationRemote(baseUrl: string, token: string, observationId: string): Promise<void> {
+  const res = await fetch(`${baseUrl}/observations/${observationId}/void`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new Error(`POST /observations/${observationId}/void failed: ${res.status}`);
+  }
+}
+
+export type ExportPeriod = 'current' | 'last3' | 'custom';
+
+export interface ExportPdfBody {
+  period: ExportPeriod;
+  customStart?: string;
+  customEnd?: string;
+  password: string;
+}
+
+export class ExportPdfError extends Error {
+  constructor(public readonly code: 'insufficient_data' | 'rate_limited' | 'unknown') {
+    super(code);
+  }
+}
+
+/** SPEC 02 — the PDF itself is never persisted server-side; this just streams the binary once. */
+export async function exportPdf(baseUrl: string, token: string, body: ExportPdfBody): Promise<ArrayBuffer> {
+  const res = await fetch(`${baseUrl}/exports/pdf`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    if (res.status === 422) throw new ExportPdfError('insufficient_data');
+    if (res.status === 429) throw new ExportPdfError('rate_limited');
+    throw new ExportPdfError('unknown');
+  }
+  return res.arrayBuffer();
+}
