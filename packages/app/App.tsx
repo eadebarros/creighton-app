@@ -21,21 +21,34 @@ if (!CLERK_PUBLISHABLE_KEY) {
 
 SplashScreen.preventAutoHideAsync();
 
-// Required by expo-web-browser's OAuth redirect flow (Google/Apple sign-in
-// via Clerk's useSSO) — no-op on native, needed so a pending auth session
-// resolves correctly on web.
-WebBrowser.maybeCompleteAuthSession();
+// These two run at module-evaluation time, before React (or Expo Go's own
+// error overlay) has started — a synchronous throw here would white-screen
+// the whole app with no error shown at all. Never let either take the app
+// down; each is a non-essential nicety (foreground notification banners,
+// OAuth redirect completion on web) that degrades gracefully if it fails.
+try {
+  // Required by expo-web-browser's OAuth redirect flow (Google/Apple sign-in
+  // via Clerk's useSSO) — no-op on native, needed so a pending auth session
+  // resolves correctly on web.
+  WebBrowser.maybeCompleteAuthSession();
+} catch (err) {
+  console.warn('WebBrowser.maybeCompleteAuthSession failed', err);
+}
 
-// Daily registro reminder (SPEC 03 §3.3) — shows the banner/sound even if the
-// notification fires while the app happens to be in the foreground.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
+try {
+  // Daily registro reminder (SPEC 03 §3.3) — shows the banner/sound even if
+  // the notification fires while the app happens to be in the foreground.
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+    }),
+  });
+} catch (err) {
+  console.warn('Notifications.setNotificationHandler failed', err);
+}
 
 /** Must render inside <ClerkProvider> — useAuth() needs that context. */
 function AuthGate() {
