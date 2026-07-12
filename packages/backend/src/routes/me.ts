@@ -14,6 +14,7 @@ async function serializeMe(user: User) {
     role: user.role,
     partner: partner ? { email: partner.email } : null,
     instructorCredentialAck: user.instructorCredentialAck,
+    instructorCredentialAckAt: user.instructorCredentialAckAt?.toISOString() ?? null,
     currentVariantMode: user.currentVariantMode,
   };
 }
@@ -29,7 +30,8 @@ meRouter.get('/me', requireUser, async (req, res, next) => {
 meRouter.patch('/me', requireUser, async (req, res, next) => {
   try {
     const body = patchMeBodySchema.parse(req.body);
-    const updated = await prisma.user.update({ where: { id: req.internalUser.id }, data: body });
+    const data = { ...body, ...(body.instructorCredentialAck === true ? { instructorCredentialAckAt: new Date() } : {}) };
+    const updated = await prisma.user.update({ where: { id: req.internalUser.id }, data });
     res.json(await serializeMe(updated));
   } catch (err) {
     next(err);
@@ -57,7 +59,7 @@ meRouter.post('/me/reset-test-data', requireUser, async (req, res, next) => {
         }
         await tx.user.update({
           where: { id: userId },
-          data: { instructorCredentialAck: false, currentVariantMode: 'REGULAR' },
+          data: { instructorCredentialAck: false, instructorCredentialAckAt: null, currentVariantMode: 'REGULAR' },
         });
       },
       { timeout: 30_000 },

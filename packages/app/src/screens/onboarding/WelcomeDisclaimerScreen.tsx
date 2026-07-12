@@ -2,6 +2,14 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts, radii, spacing } from '../../theme';
+import {
+  DISCLAIMER_BODY,
+  DISCLAIMER_DOES_BODY,
+  DISCLAIMER_DOES_LABEL,
+  DISCLAIMER_DOESNT_BODY,
+  DISCLAIMER_DOESNT_LABEL,
+  DISCLAIMER_TITLE,
+} from './disclaimerText';
 
 interface Props {
   onContinue: () => void;
@@ -15,21 +23,14 @@ export function WelcomeDisclaimerScreen({ onContinue }: Props) {
   return (
     <ScrollView contentContainerStyle={[styles.screen, { paddingTop: insets.top + spacing.xxxl, paddingBottom: insets.bottom + spacing.xl }]}>
       <Text style={styles.eyebrow}>Creighton Tracker</Text>
-      <Text style={styles.title}>Acompanhamento de precisão, sob orientação de instrutora credenciada.</Text>
-      <Text style={styles.body}>
-        Não é um app de bem-estar de ciclo. É um instrumento clínico de casal para o Método de Ovulação
-        Creighton, usado em conjunto com sua instrutora.
-      </Text>
+      <Text style={styles.title}>{DISCLAIMER_TITLE}</Text>
+      <Text style={styles.body}>{DISCLAIMER_BODY}</Text>
 
       <View style={styles.card}>
-        <Text style={styles.cardLabel}>O que este app faz</Text>
-        <Text style={styles.cardBody}>
-          Registra suas observações diárias e calcula o padrão do ciclo segundo o método Creighton.
-        </Text>
-        <Text style={styles.cardLabel}>O que este app não faz</Text>
-        <Text style={styles.cardBody}>
-          Não substitui orientação médica ou da instrutora, nem faz diagnóstico.
-        </Text>
+        <Text style={styles.cardLabel}>{DISCLAIMER_DOES_LABEL}</Text>
+        <Text style={styles.cardBody}>{DISCLAIMER_DOES_BODY}</Text>
+        <Text style={styles.cardLabel}>{DISCLAIMER_DOESNT_LABEL}</Text>
+        <Text style={styles.cardBody}>{DISCLAIMER_DOESNT_BODY}</Text>
       </View>
 
       <Pressable style={styles.ackRow} onPress={() => setAck((v) => !v)}>

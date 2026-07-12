@@ -26,6 +26,7 @@ describe('GET /me', () => {
       role: 'PRIMARY_OBSERVER',
       partner: null,
       instructorCredentialAck: false,
+      instructorCredentialAckAt: null,
       currentVariantMode: 'REGULAR',
     });
   });
@@ -54,6 +55,7 @@ describe('PATCH /me', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ instructorCredentialAck: true, currentVariantMode: 'LACTATION' });
+    expect(res.body.instructorCredentialAckAt).not.toBeNull();
 
     const after = await request(app).get('/me').set(asUser(TEST_CLERK_USER_ID));
     expect(after.body).toMatchObject({ instructorCredentialAck: true, currentVariantMode: 'LACTATION' });

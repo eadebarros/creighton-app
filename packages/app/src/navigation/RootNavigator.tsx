@@ -11,6 +11,8 @@ import { ChartScreen } from '../screens/chart/ChartScreen';
 import { InvitePartnerScreen } from '../screens/partner/InvitePartnerScreen';
 import { ExportPdfScreen } from '../screens/export/ExportPdfScreen';
 import { SettingsHubScreen } from '../screens/settings/SettingsHubScreen';
+import { ChangePasswordScreen } from '../screens/settings/ChangePasswordScreen';
+import { TermsScreen } from '../screens/settings/TermsScreen';
 import { getDb } from '../db/client';
 import { getActiveCycle } from '../db/cycleRepository';
 import { hasEntryForDate } from '../db/entryRepository';
@@ -51,6 +53,8 @@ export function RootNavigator() {
           <Stack.Screen name="InvitePartner" component={InvitePartnerScreen} />
           <Stack.Screen name="ExportPdf" component={ExportPdfScreen} />
           <Stack.Screen name="Settings" component={SettingsHubScreen} />
+          <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+          <Stack.Screen name="Terms" component={TermsScreen} />
         </Stack.Navigator>
       </CaptureFlowProvider>
     </NavigationContainer>

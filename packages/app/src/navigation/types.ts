@@ -9,4 +9,6 @@ export type RootStackParamList = {
   InvitePartner: undefined;
   ExportPdf: undefined;
   Settings: undefined;
+  ChangePassword: undefined;
+  Terms: undefined;
 };

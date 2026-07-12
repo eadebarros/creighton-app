@@ -3,6 +3,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth, useUser } from '@clerk/expo';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RULES_ENGINE_VERSION } from '@creighton/rules-engine';
 import { getMe } from '../../api/client';
 import type { MeResponse } from '../../api/client';
 import { getApiBaseUrl } from '../../api/config';
@@ -17,6 +18,9 @@ const VARIANT_LABELS: Record<string, string> = {
   LACTATION: 'Lactação',
   MENOPAUSE: 'Pré-menopausa',
 };
+
+/** Matches packages/app/app.json's expo.version — a plain constant here, same pattern as RULES_ENGINE_VERSION. */
+const APP_VERSION = '1.0.0';
 
 interface RowItem {
   label: string;
@@ -116,12 +120,12 @@ export function SettingsHubScreen({ navigation }: Props) {
         <SettingsRow item={{ label: 'Privacidade do parceiro', value: 'Em breve' }} />
 
         <Text style={styles.sectionLabel}>Conta</Text>
-        <SettingsRow item={{ label: 'Alterar senha', value: 'Em breve' }} />
+        <SettingsRow item={{ label: 'Alterar senha', onPress: () => navigation.navigate('ChangePassword') }} />
         <SettingsRow item={{ label: 'Notificações', value: 'Em breve' }} />
 
         <Text style={styles.sectionLabel}>Dados &amp; privacidade</Text>
         <SettingsRow item={{ label: 'Baixar meus dados', value: 'Em breve' }} />
-        <SettingsRow item={{ label: 'Termos e disclaimer clínico', value: 'Em breve' }} />
+        <SettingsRow item={{ label: 'Termos e disclaimer clínico', onPress: () => navigation.navigate('Terms') }} />
 
         <View style={styles.dangerZone}>
           <SettingsRow item={{ label: 'Excluir minha conta', value: 'Em breve', danger: true }} />
@@ -140,7 +144,9 @@ export function SettingsHubScreen({ navigation }: Props) {
           </View>
         )}
 
-        <Text style={styles.footer}>versão 1.0.0</Text>
+        <Text style={styles.footer}>
+          versão {APP_VERSION} · motor de regras v{RULES_ENGINE_VERSION}
+        </Text>
       </ScrollView>
     </View>
   );

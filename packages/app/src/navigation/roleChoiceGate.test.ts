@@ -6,6 +6,7 @@ function me(overrides: Partial<Parameters<typeof shouldShowRoleChoice>[0]>) {
     role: 'PRIMARY_OBSERVER' as const,
     partner: null,
     instructorCredentialAck: true,
+    instructorCredentialAckAt: null,
     currentVariantMode: 'REGULAR' as const,
     ...overrides,
   };

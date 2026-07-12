@@ -101,6 +101,7 @@ model User {
   partnerOf               User[]      @relation("UserPartner")
   currentVariantMode      VariantMode @default(REGULAR) @map("current_variant_mode")
   instructorCredentialAck Boolean     @default(false) @map("instructor_credential_ack")
+  instructorCredentialAckAt DateTime? @map("instructor_credential_ack_at")
   createdAt               DateTime    @default(now()) @map("created_at")
   cycles                  Cycle[]
   partnerInvitesCreated   PartnerInvite[]         @relation("PartnerInviteCreatedBy")

@@ -92,6 +92,7 @@ export interface MeResponse {
   role: 'PRIMARY_OBSERVER' | 'COOP_PARTNER';
   partner: { email: string } | null;
   instructorCredentialAck: boolean;
+  instructorCredentialAckAt: string | null;
   currentVariantMode: VariantMode;
 }
 
