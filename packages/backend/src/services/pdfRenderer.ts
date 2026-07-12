@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import PDFDocument from 'pdfkit';
 import { stateToToken } from '@creighton/rules-engine';
 import type {
@@ -207,18 +206,13 @@ function renderSummaryPage(doc: PDFKit.PDFDocument, summary: ExportSummary): voi
 /**
  * SPEC 02 — renders the classic Creighton chart (one landscape page per
  * cycle) + a technical summary page, entirely in memory (never touches
- * disk, so "no residual file" holds by construction). Password-protected via
- * pdfkit's native AES encryption; the owner password is random and
- * discarded immediately — never exposed, never persisted.
+ * disk, so "no residual file" holds by construction). No password
+ * protection (Edu, 12/07 — reverses SPEC 02 Seção 4 item 1: password
+ * requirement removed).
  */
-export async function renderCreightonPdf(data: ExportData, password: string): Promise<Buffer> {
+export async function renderCreightonPdf(data: ExportData): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({
-      autoFirstPage: false,
-      userPassword: password,
-      ownerPassword: randomUUID(),
-      permissions: { printing: 'lowResolution', modifying: false, copying: false, annotating: false },
-    });
+    const doc = new PDFDocument({ autoFirstPage: false });
 
     const chunks: Buffer[] = [];
     doc.on('data', (chunk: Buffer) => chunks.push(chunk));

@@ -34,11 +34,10 @@ export function ExportPdfScreen({ navigation }: Props) {
   const [period, setPeriod] = useState<ExportPeriod>('current');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
-  const [password, setPassword] = useState('');
   const [state, setState] = useState<State>({ kind: 'configuring', error: null });
 
   async function handleGenerate() {
-    const validationError = validateExportForm({ period, customStart, customEnd, password });
+    const validationError = validateExportForm({ period, customStart, customEnd });
     if (validationError) {
       setState({ kind: 'configuring', error: validationError });
       return;
@@ -52,7 +51,6 @@ export function ExportPdfScreen({ navigation }: Props) {
         period,
         customStart: period === 'custom' ? customStart : undefined,
         customEnd: period === 'custom' ? customEnd : undefined,
-        password,
       });
 
       const file = new File(Paths.cache, `creighton-export-${Date.now()}.pdf`);
@@ -91,20 +89,16 @@ export function ExportPdfScreen({ navigation }: Props) {
 
           {period === 'custom' && (
             <View style={styles.customDates}>
-              <TextField label="De (AAAA-MM-DD)" value={customStart} onChangeText={setCustomStart} placeholder="2026-01-01" />
+              <TextField
+                label="De (AAAA-MM-DD)"
+                value={customStart}
+                onChangeText={setCustomStart}
+                placeholder="2026-01-01"
+                error={state.error ?? undefined}
+              />
               <TextField label="Até (AAAA-MM-DD)" value={customEnd} onChangeText={setCustomEnd} placeholder="2026-03-01" />
             </View>
           )}
-
-          <TextField
-            label="Senha do PDF"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            placeholder="Defina uma senha"
-            error={state.error ?? undefined}
-          />
-          <Text style={styles.note}>Essa senha não fica salva em nenhum lugar — guarde-a para compartilhar com sua instrutora.</Text>
 
           <View style={styles.infoBox}>
             <Text style={styles.infoBoxTitle}>Incluído no relatório</Text>
@@ -120,7 +114,7 @@ export function ExportPdfScreen({ navigation }: Props) {
       {state.kind === 'generating' && (
         <View style={styles.center}>
           <ActivityIndicator color={colors.accent} />
-          <Text style={styles.subtitle}>Gerando PDF protegido…</Text>
+          <Text style={styles.subtitle}>Gerando PDF…</Text>
         </View>
       )}
 
@@ -182,12 +176,6 @@ const styles = StyleSheet.create({
   },
   customDates: {
     gap: spacing.sm,
-  },
-  note: {
-    fontFamily: fonts.body.regular,
-    fontSize: 12,
-    color: colors.inkMuted,
-    marginTop: -spacing.xs,
   },
   infoBox: {
     borderWidth: 1,

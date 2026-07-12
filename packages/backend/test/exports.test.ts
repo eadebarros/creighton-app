@@ -28,31 +28,17 @@ async function linkPartner(): Promise<void> {
 describe('POST /exports/pdf', () => {
   it('rejects a COOP_PARTNER with 403, regardless of privacy config', async () => {
     await linkPartner();
-    const res = await request(app)
-      .post('/exports/pdf')
-      .set(asUser(PARTNER_ID))
-      .send({ period: 'current', password: 'senha123' });
+    const res = await request(app).post('/exports/pdf').set(asUser(PARTNER_ID)).send({ period: 'current' });
     expect(res.status).toBe(403);
   });
 
-  it('rejects a password shorter than 6 characters', async () => {
-    const res = await request(app)
-      .post('/exports/pdf')
-      .set(asUser(TEST_CLERK_USER_ID))
-      .send({ period: 'current', password: '123' });
-    expect(res.status).toBe(400);
-  });
-
   it('returns 422 when the selected period has no data', async () => {
-    const res = await request(app)
-      .post('/exports/pdf')
-      .set(asUser(TEST_CLERK_USER_ID))
-      .send({ period: 'current', password: 'senha123' });
+    const res = await request(app).post('/exports/pdf').set(asUser(TEST_CLERK_USER_ID)).send({ period: 'current' });
     expect(res.status).toBe(422);
     expect(res.body).toMatchObject({ error: 'insufficient_data' });
   });
 
-  it('generates a password-protected PDF for a Regular cycle', async () => {
+  it('generates an unencrypted PDF for a Regular cycle (Edu, 12/07 — no password requirement)', async () => {
     const cycleId = randomUUID();
     const entry = buildEntry(cycleId, '2026-01-01', { bleedingType: 'H' });
     await request(app).post('/entries').set(asUser(TEST_CLERK_USER_ID)).send({ entries: [entry] });
@@ -60,7 +46,7 @@ describe('POST /exports/pdf', () => {
     const res = await request(app)
       .post('/exports/pdf')
       .set(asUser(TEST_CLERK_USER_ID))
-      .send({ period: 'current', password: 'senha123' })
+      .send({ period: 'current' })
       .buffer(true)
       .parse((response, callback) => {
         const chunks: Buffer[] = [];
@@ -70,7 +56,9 @@ describe('POST /exports/pdf', () => {
 
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toBe('application/pdf');
-    expect((res.body as Buffer).subarray(0, 5).toString('latin1')).toBe('%PDF-');
+    const buffer = res.body as Buffer;
+    expect(buffer.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+    expect(buffer.toString('latin1')).not.toContain('/Encrypt');
   });
 
   it('generates a PDF for a Lactação cycle without throwing', async () => {
@@ -82,7 +70,7 @@ describe('POST /exports/pdf', () => {
     const res = await request(app)
       .post('/exports/pdf')
       .set(asUser(TEST_CLERK_USER_ID))
-      .send({ period: 'current', password: 'senha123' })
+      .send({ period: 'current' })
       .buffer(true)
       .parse((response, callback) => {
         const chunks: Buffer[] = [];
@@ -123,10 +111,7 @@ describe('POST /observations/:id/void (sync gap fix)', () => {
     });
     expect(consolidated).toMatchObject({ rawCode: '0' }); // falls back to the remaining (morning) observation
 
-    const exportData = await resolveExportData((await prisma.user.findFirstOrThrow({})).id, {
-      period: 'current',
-      password: 'senha123',
-    });
+    const exportData = await resolveExportData((await prisma.user.findFirstOrThrow({})).id, { period: 'current' });
     expect(exportData.summary.voidedObservationCount).toBe(1);
   });
 

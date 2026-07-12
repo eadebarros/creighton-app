@@ -26,7 +26,7 @@ exportsRouter.post(
     try {
       const body = exportPdfBodySchema.parse(req.body);
       const data = await resolveExportData(req.internalUser.id, body);
-      const pdf = await renderCreightonPdf(data, body.password);
+      const pdf = await renderCreightonPdf(data);
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'attachment; filename="creighton-export.pdf"');
       res.send(pdf);

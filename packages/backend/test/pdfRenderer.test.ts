@@ -73,7 +73,7 @@ describe('renderCreightonPdf', () => {
       days,
     };
 
-    const buffer = await renderCreightonPdf(buildData([cycle]), 'senhaSegura123');
+    const buffer = await renderCreightonPdf(buildData([cycle]));
     expect(buffer.subarray(0, 5).toString('latin1')).toBe('%PDF-');
     expect(buffer.length).toBeGreaterThan(1000);
   });
@@ -100,7 +100,7 @@ describe('renderCreightonPdf', () => {
       days,
     };
 
-    const buffer = await renderCreightonPdf(buildData([cycle]), 'senhaSegura123');
+    const buffer = await renderCreightonPdf(buildData([cycle]));
     expect(buffer.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   });
 
@@ -116,7 +116,7 @@ describe('renderCreightonPdf', () => {
       days: Array.from({ length: 41 }, (_, i) => day({ date: addDays(start, i), dayNumber: i + 1 })),
     };
 
-    const buffer = await renderCreightonPdf(buildData([cycle]), 'senhaSegura123');
+    const buffer = await renderCreightonPdf(buildData([cycle]));
     expect(buffer.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   });
 
@@ -131,7 +131,7 @@ describe('renderCreightonPdf', () => {
       days: Array.from({ length: 28 }, (_, i) => day({ date: `2026-0${n}-01`, dayNumber: i + 1 })),
     }));
 
-    const buffer = await renderCreightonPdf(buildData(cycles), 'senhaSegura123');
+    const buffer = await renderCreightonPdf(buildData(cycles));
     expect(buffer.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   });
 });

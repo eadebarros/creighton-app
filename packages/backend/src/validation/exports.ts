@@ -7,7 +7,6 @@ export const exportPdfBodySchema = z
     period: z.enum(['current', 'last3', 'custom']),
     customStart: isoDate.optional(),
     customEnd: isoDate.optional(),
-    password: z.string().min(6, 'a senha precisa ter pelo menos 6 caracteres'),
   })
   .refine((body) => body.period !== 'custom' || (body.customStart && body.customEnd), {
     message: 'customStart/customEnd são obrigatórios quando period = custom',

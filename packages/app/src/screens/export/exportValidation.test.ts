@@ -1,15 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { validateExportForm } from './exportValidation';
 
-const base = { period: 'current' as const, customStart: '', customEnd: '', password: 'senha123' };
+const base = { period: 'current' as const, customStart: '', customEnd: '' };
 
 describe('validateExportForm', () => {
   it('accepts a valid current-period request', () => {
     expect(validateExportForm(base)).toBeNull();
-  });
-
-  it('rejects a password shorter than 6 characters', () => {
-    expect(validateExportForm({ ...base, password: '123' })).not.toBeNull();
   });
 
   it('requires well-formed dates for a custom period', () => {

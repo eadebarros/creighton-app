@@ -212,7 +212,6 @@ export interface ExportPdfBody {
   period: ExportPeriod;
   customStart?: string;
   customEnd?: string;
-  password: string;
 }
 
 export class ExportPdfError extends Error {
