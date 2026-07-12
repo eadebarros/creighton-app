@@ -14,6 +14,8 @@ import { PartnerSettingsScreen } from '../screens/settings/PartnerSettingsScreen
 import { ChangePasswordScreen } from '../screens/settings/ChangePasswordScreen';
 import { TermsScreen } from '../screens/settings/TermsScreen';
 import { NotificationsScreen } from '../screens/settings/NotificationsScreen';
+import { DownloadDataScreen } from '../screens/settings/DownloadDataScreen';
+import { DeleteAccountScreen } from '../screens/settings/DeleteAccountScreen';
 import { getDb } from '../db/client';
 import { getActiveCycle } from '../db/cycleRepository';
 import { hasEntryForDate } from '../db/entryRepository';
@@ -57,6 +59,8 @@ export function RootNavigator() {
           <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
           <Stack.Screen name="Terms" component={TermsScreen} />
           <Stack.Screen name="Notifications" component={NotificationsScreen} />
+          <Stack.Screen name="DownloadData" component={DownloadDataScreen} />
+          <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
         </Stack.Navigator>
       </CaptureFlowProvider>
     </NavigationContainer>

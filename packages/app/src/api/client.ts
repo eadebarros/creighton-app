@@ -228,6 +228,32 @@ export async function resetTestData(baseUrl: string, token: string): Promise<voi
   }
 }
 
+export class DataExportError extends Error {
+  constructor(public readonly code: 'rate_limited' | 'unknown') {
+    super(code);
+  }
+}
+
+/** LGPD portabilidade (SPEC 03 §3.4) — returns the raw JSON text as-is, written straight to a file for sharing. */
+export async function exportMyData(baseUrl: string, token: string): Promise<string> {
+  const res = await fetch(`${baseUrl}/me/export-data`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) {
+    throw new DataExportError(res.status === 429 ? 'rate_limited' : 'unknown');
+  }
+  return res.text();
+}
+
+/** LGPD — direito de exclusão (SPEC 03 §3.7). Só deve ser chamado após a reautenticação de senha via Clerk, no app. */
+export async function deleteMyAccount(baseUrl: string, token: string): Promise<void> {
+  const res = await fetch(`${baseUrl}/me/delete-account`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new Error(`POST /me/delete-account failed: ${res.status}`);
+  }
+}
+
 export type ExportPeriod = 'current' | 'last3' | 'custom';
 
 export interface ExportPdfBody {

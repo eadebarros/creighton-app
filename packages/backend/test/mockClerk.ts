@@ -26,5 +26,8 @@ export const clerkClient = {
       const email = id === TEST_CLERK_USER_ID ? TEST_CLERK_EMAIL : `${id}@example.com`;
       return { emailAddresses: [{ emailAddress: email }] };
     },
+    async deleteUser(_id: string) {
+      // No real Clerk identity in tests — this only needs to resolve.
+    },
   },
 };

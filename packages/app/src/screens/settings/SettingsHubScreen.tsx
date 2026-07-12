@@ -143,11 +143,11 @@ export function SettingsHubScreen({ navigation }: Props) {
         <SettingsRow item={{ label: 'Notificações', onPress: () => navigation.navigate('Notifications') }} />
 
         <Text style={styles.sectionLabel}>Dados &amp; privacidade</Text>
-        <SettingsRow item={{ label: 'Baixar meus dados', value: 'Em breve' }} />
+        <SettingsRow item={{ label: 'Baixar meus dados', onPress: () => navigation.navigate('DownloadData') }} />
         <SettingsRow item={{ label: 'Termos e disclaimer clínico', onPress: () => navigation.navigate('Terms') }} />
 
         <View style={styles.dangerZone}>
-          <SettingsRow item={{ label: 'Excluir minha conta', value: 'Em breve', danger: true }} />
+          <SettingsRow item={{ label: 'Excluir minha conta', onPress: () => navigation.navigate('DeleteAccount'), danger: true }} />
         </View>
 
         <Pressable onPress={() => signOut()} style={styles.row}>

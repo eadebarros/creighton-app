@@ -1,10 +1,23 @@
 import { Router } from 'express';
+import { rateLimit } from 'express-rate-limit';
 import { prisma } from '../db/prisma.js';
 import { requireUser } from '../middleware/requireUser.js';
+import { requirePrimaryObserver } from '../middleware/requirePrimaryObserver.js';
+import { deleteAccount } from '../services/accountDeletionService.js';
+import { resolveFullDataExport } from '../services/dataExportService.js';
 import { patchMeBodySchema } from '../validation/me.js';
 import type { User } from '@prisma/client';
 
 export const meRouter = Router();
+
+/** LGPD portabilidade (SPEC 03 §3.4) — mesmo padrão do pdfExportLimiter (exports.ts), instância própria. */
+const dataExportLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.internalUser.id,
+});
 
 /** The invite that created the current link, whichever side created it — used only to show "linked since" in Configurações. */
 async function findLinkedAt(userId: string, partnerId: string): Promise<Date | null> {
@@ -79,6 +92,33 @@ meRouter.post('/me/reset-test-data', requireUser, async (req, res, next) => {
       },
       { timeout: 30_000 },
     );
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** LGPD portabilidade — JSON completo (observações anuladas incluídas, histórico de versões incluído). Nunca pede senha: é a titular pedindo o próprio dado. */
+meRouter.get('/me/export-data', requireUser, dataExportLimiter, requirePrimaryObserver, async (req, res, next) => {
+  try {
+    const data = await resolveFullDataExport(req.internalUser.id);
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename="creighton-dados.json"');
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * LGPD — direito de exclusão. A reautenticação de senha acontece no app,
+ * client-side, via Clerk (session.attemptFirstFactorVerification) antes
+ * deste endpoint ser chamado; aqui só exige uma sessão válida (requireUser),
+ * já que não há senha própria neste backend para checar novamente.
+ */
+meRouter.post('/me/delete-account', requireUser, async (req, res, next) => {
+  try {
+    await deleteAccount(req.internalUser.id);
     res.status(204).send();
   } catch (err) {
     next(err);
