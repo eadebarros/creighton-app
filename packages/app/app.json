@@ -1,16 +1,18 @@
 {
   "expo": {
-    "name": "app",
-    "slug": "app",
+    "name": "Creighton Tracker",
+    "slug": "creighton-tracker",
     "scheme": "creighton",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "br.com.edudebarros.creighton"
     },
     "android": {
+      "package": "br.com.edudebarros.creighton",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -30,6 +32,12 @@
       "expo-secure-store",
       "expo-notifications",
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "b86cf97b-bee6-46f1-b8e3-1c55973376c0"
+      }
+    },
+    "owner": "eadebarros"
   }
 }
