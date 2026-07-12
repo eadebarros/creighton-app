@@ -106,7 +106,11 @@ export function RoleGate() {
         await SecureStore.setItemAsync(ROLE_CACHE_KEY, me.role);
         setStage({ kind: 'primary' });
       }
-    } catch {
+    } catch (err) {
+      // Logged, not just surfaced as a generic "no connection" message — this
+      // catch also fires for non-network failures (a rejected token, a 5xx
+      // from our backend), which the UI text alone doesn't distinguish.
+      console.warn('[RoleGate] resolve failed', err);
       if (!cached) {
         setStage({ kind: 'error' });
       }
