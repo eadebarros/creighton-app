@@ -42,7 +42,8 @@
     "web": "expo start --web",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build": "tsc --noEmit"
+    "build": "tsc --noEmit",
+    "eas-build-post-install": "npm run build --workspace=@creighton/rules-engine"
   },
   "private": true
 }

@@ -9,7 +9,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "br.com.edudebarros.creighton"
+      "bundleIdentifier": "br.com.edudebarros.creighton",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "br.com.edudebarros.creighton",
